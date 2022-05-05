@@ -3,25 +3,42 @@ const fs = require("fs/promises");
 const filepath = "/Users/juan.florez/Downloads/cube.stl";
 
 // file structure in http://www.fabbers.com/tech/STL_Format
-
-
 async function openStlFile() {
-  const filehandle = await fs.open(filepath);
+  const fileHandle = await fs.open(filepath);
   // read header
-  var buffer = Buffer.alloc(80);
-  var data = await filehandle.read(buffer, 0, 80, null);
-  console.log(buffer.toString('ascii'))
+  const header = await readChunk(80, fileHandle, buffer => buffer.toString('ascii'));
+  console.log(header);
   // number of facets
-  buffer = Buffer.alloc(4);
-  data = await filehandle.read(buffer, 0, 4, null);
-  console.log(buffer.readInt32LE(0))
+  const facets = await readChunk(4, fileHandle, buffer => buffer.readInt32LE(0));
+  console.log(facets);
   // triangular facet
-  buffer = Buffer.alloc(50);
-  data = await filehandle.read(buffer, 0, 50, null);
-  printBufferAsFacet(data.buffer);
+  for(var i = 0; i < facets; i++) {
+    let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
+    console.log(facet);
+  }
 }
 
-function printBufferAsFacet(buffer) {
+/**
+ * Allocates a buffer, reads a chunk of bytes size, then parses
+ * this chunk with the provided parseCallback and return the 
+ * parsing results.
+ * @param {int} bytes 
+ * @param {FileHandle} fileHandle 
+ * @param {Function} parseCallback 
+ * @returns a value after chunk casting
+ */
+function readChunk(bytes, fileHandle, parseCallback) {
+  var buffer = Buffer.alloc(bytes);
+  var chunk = fileHandle.read(buffer, 0, bytes, null);
+  return chunk.then(value => parseCallback(value.buffer))
+}
+
+/**
+ * 
+ * @param {Buffer} buffer 
+ * @returns 
+ */
+function read50bitFacet(buffer) {
   // 48bytes = 4 groups of 12bytes
   var facet = [];
   for(var i = 0; i < 4; i++) {
@@ -33,7 +50,6 @@ function printBufferAsFacet(buffer) {
   }
   // 2bytes  = attribute count
   // pass
-  console.log(facet);
   return facet;
 }
 
