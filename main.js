@@ -54,7 +54,7 @@ function read50bitFacet(buffer) {
 }
 
 /**
- * DEPRECATED in favor of https://nodejs.org/api/buffer.html#buftostringencoding-start-end
+ * @deprecated in favor of https://nodejs.org/api/buffer.html#buftostringencoding-start-end
  * @param {Buffer} buffer 
  */
 function printBufferAsString(buffer) {
@@ -65,7 +65,7 @@ function printBufferAsString(buffer) {
 }
 
 /**
- * DEPRECATED in favor of https://nodejs.org/api/buffer.html#bufreadint32leoffset
+ * @deprecated in favor of https://nodejs.org/api/buffer.html#bufreadint32leoffset
  * @param {Buffer} buffer 
  * @returns 
  */
