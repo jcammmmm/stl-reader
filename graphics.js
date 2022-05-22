@@ -26,7 +26,7 @@ function main() {
 
   var gl = canvas.getContext("webgl");
   if (!gl) {
-    throw MediaError("Cannot load WebGL context.");
+    throw Error("Cannot load WebGL context.");
   }
 
   var vertexShaderSource = document.querySelector("#vertex-shader-2d").text;
@@ -38,34 +38,76 @@ function main() {
   var program = createProgram(gl, vertexShader, fragmentShader);
 
   var positionAttribLocation = gl.getAttribLocation(program, 'a_position');
-
+  var colorAttribLocation = gl.getAttribLocation(program, 'a_color');
 
   var positionBuffer = gl.createBuffer();
+  var colorBuffer = gl.createBuffer();
 
   // Bind the position buffer.
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);   
   // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
   var size = 2;          // 2 components per iteration
   var type = gl.FLOAT;   // the data is 32bit floats
   var normalize = false; // don't normalize the data
   var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
   var offset = 0;        // start at the beginning of the buffer
-  gl.vertexAttribPointer(
-    positionAttribLocation, size, type, normalize, stride, offset);
+
+ 
+  let mv = 0;
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+      0 + mv, 0 + mv,
+      100 + mv, 0 + mv,
+      100 + mv, 70 + mv,
+      100 + mv, 70 + mv,
+      0 + mv, 70 + mv,
+      0 + mv, 0 + mv,
+    ]),
+    gl.STATIC_DRAW
+  )
+  gl.vertexAttribPointer(positionAttribLocation, size, type, normalize, stride, offset);
+  gl.enableVertexAttribArray(positionAttribLocation);
+
+  var r = Math.random();
+  var g = Math.random();
+  var b = Math.random();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+      r, g, b, 1,
+      r, g, b, 1,
+      r, g, b, 1,
+      1 - r, 1 - g, 1 - b, 1,
+      1 - r, 1 - g, 1 - b, 1,
+      1 - r, 1 - g, 1 - b, 1,
+    ]),
+    gl.STATIC_DRAW
+  );
+  gl.enableVertexAttribArray(colorAttribLocation);
+  gl.vertexAttribPointer(colorAttribLocation, 4, gl.FLOAT, false, 0, 0);
 
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
   // Tell it to use our program (pair of shaders)
+
   gl.useProgram(program);
-  gl.enableVertexAttribArray(positionAttribLocation);
+  var resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
+  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
-  addSlider(gl, function () {
-    drawBasicExample(gl, program, this.value);
-  });
+  // addSlider(gl, function () {
+  //   drawBasicExample(gl, program, this.value);
+  // });
 
+
+  var primitiveType = gl.TRIANGLES;
+  var offset = 0;
+  var count = 6;
+  gl.drawArrays(primitiveType, offset, count);
   // drawRandomSquares(gl, program);
-  drawBasicExample(gl, program, 0);
+
 }
 
 function clearCanvas(gl) {
@@ -76,57 +118,11 @@ function clearCanvas(gl) {
 function addSlider(gl, callback) {
   let slider = document.createElement('input');
   slider.setAttribute("type", "range");
-  slider.setAttribute("value", gl.canvas.width/2);
+  slider.setAttribute("value", gl.canvas.width / 2);
   slider.setAttribute("min", 0);
   slider.setAttribute("max", gl.canvas.width);
   slider.oninput = callback;
   document.body.append(slider);
-}
-
-function drawBasicExample(gl, program, mv) {
-  mv = parseInt(mv);
-  var resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
-  var colorUniformLocation = gl.getUniformLocation(program, 'u_color');
-  var sideUniformLocation = gl.getUniformLocation(program, 'u_side');
-  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-  gl.uniform4f(colorUniformLocation, Math.random(), 0.5, 0.5, 1);
-
-  gl.uniform1f(sideUniformLocation, true);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([
-      0 + mv, 0 + mv,
-      100 + mv, 0 + mv,
-      100 + mv, 70 + mv,
-    ]),
-    gl.STATIC_DRAW
-  )
-
-  var primitiveType = gl.TRIANGLES;
-  var offset = 0;
-  var count = 3;
-  gl.drawArrays(primitiveType, offset, count);
-
-  // ---
-  gl.uniform1f(sideUniformLocation, false);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([
-      100 + mv, 70 + mv,
-      0 + mv, 70 + mv,
-      0 + mv, 0 + mv
-    ]),
-    gl.STATIC_DRAW
-  )
-
-  var primitiveType = gl.TRIANGLES;
-  var offset = 0;
-  var count = 3;
-  gl.drawArrays(primitiveType, offset, count);
-}
-
-function drawSemiRectangle() {
-
 }
 
 function drawRandomSquares(gl, program) {
