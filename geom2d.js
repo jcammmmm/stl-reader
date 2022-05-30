@@ -18,61 +18,60 @@ var fragShader = `
 function main() {
   var canvas = document.getElementById('c');
   var gl = canvas.getContext('webgl');
+  
   var program = createProgram(gl, vertShader, fragShader);
-
-  var pBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
-  setRectangle(gl);
-
+  
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   var attrLocPosition = gl.getAttribLocation(program, 'a_position');
   gl.vertexAttribPointer(attrLocPosition, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrLocPosition);
-
+  gl.useProgram(program);
   var unifLocColor = gl.getUniformLocation(program, 'u_color');
-  gl.uniform4f(unifLocColor, 0.5, 0.5, 0.5, 1);
-  gl.useProgram(program)
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
-  
-}
+  gl.uniform4f(unifLocColor, 0.5, 0.5, 1 , 1);
 
-function createShader(gl, shaderSource, type) {
-  var shader = gl.createShader(type);
-  gl.shaderSource(shader, shaderSource);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    var info = gl.getShaderInfoLog(shader);
-    throw 'No se pudo comilar el shader.\nDetalles:\n' + info;
+  setupSlider(0, gl.canvas.height);
+  setupSlider(1, gl.canvas.width);
+
+  let translation = [0, 0];
+  let rectangles = [];
+  let count = 0;
+
+  function drawScene() {
+    setRectangle(gl, translation);
+    gl.drawArrays(gl.TRIANGLES, 0, count);
   }
-  return shader;
-}
 
-function createProgram(gl, vertShader, fragShader) {
-  var vShader = createShader(gl, vertShader, gl.VERTEX_SHADER);
-  var fShader = createShader(gl, fragShader, gl.FRAGMENT_SHADER);
-
-  var program = gl.createProgram();
-  gl.attachShader(program, vShader);
-  gl.attachShader(program, fShader);
-  gl.linkProgram(program)
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    var info = gl.getProgramInfoLog(program);
-    throw 'No se puede compilar el programa WebGL.\nDetalles:\n' + info;
+  function setupSlider(axis, max) {
+    configureSlider(max, function(event) {
+      let coord = parseInt(event.target.value);
+      translation[axis] = coord/max*2 - 1;
+      drawScene();
+    });
   }
-  return program;
+
+  function setRectangle(gl, tr) {
+    let rectangle = [
+      0   + tr[0], 0   + tr[1],
+      0.1 + tr[0], 0   + tr[1],
+      0.1 + tr[0], 0.1 + tr[1],
+      0.1 + tr[0], 0.1 + tr[1],
+      0   + tr[0], 0.1 + tr[1],
+      0   + tr[0], 0   + tr[1],
+    ]
+    count += 6;
+    rectangles = rectangles.concat(rectangle);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(rectangles),
+      gl.STATIC_DRAW
+    )
+  }
+
+  drawScene();
 }
 
 
-function setRectangle(gl) {
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([
-      0.1, 0.1,
-      0.8, 0.1,
-      0.8, 0.7
-    ]),
-    gl.STATIC_DRAW
-  )
-}
 
 main();
+
+console.log('geom2d.js loaded.');
