@@ -1,8 +1,9 @@
 var vertShader = `
   attribute vec4 a_position;
+  uniform vec2 u_translation;
 
   void main() {
-    gl_Position = a_position;
+    gl_Position = a_position + vec4(u_translation, 0, 0);
   }
 `
 
@@ -23,22 +24,26 @@ function main() {
   
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   var attrLocPosition = gl.getAttribLocation(program, 'a_position');
-  gl.vertexAttribPointer(attrLocPosition, 2, gl.FLOAT, false, 0, 0);
+  var pointSize = 2;
+  gl.vertexAttribPointer(attrLocPosition, pointSize, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrLocPosition);
+  
   gl.useProgram(program);
   var unifLocColor = gl.getUniformLocation(program, 'u_color');
-  gl.uniform4f(unifLocColor, 0.5, 0.5, 1 , 1);
-
+  var unifLocTrans = gl.getUniformLocation(program, 'u_translation')
+  
   setupSlider(0, gl.canvas.height);
   setupSlider(1, gl.canvas.width);
-
+  
   let translation = [0, 0];
-  let rectangles = [];
-  let count = 0;
+  
+  let shape = buildF(0, 0, 0.05, 8);
+  set2dShape(gl, shape);
 
   function drawScene() {
-    setRectangle(gl, translation);
-    gl.drawArrays(gl.TRIANGLES, 0, count);
+    gl.uniform4f(unifLocColor, 0.5, 0.5, 1 , 1);
+    gl.uniform2f(unifLocTrans, translation[0], translation[1]);
+    gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
   }
 
   function setupSlider(axis, max) {
@@ -49,20 +54,29 @@ function main() {
     });
   }
 
-  function setRectangle(gl, tr) {
-    let rectangle = [
-      0   + tr[0], 0   + tr[1],
-      0.1 + tr[0], 0   + tr[1],
-      0.1 + tr[0], 0.1 + tr[1],
-      0.1 + tr[0], 0.1 + tr[1],
-      0   + tr[0], 0.1 + tr[1],
-      0   + tr[0], 0   + tr[1],
+  function buildRectangle(x0, y0, width, height) {
+    return [
+      x0,          y0,
+      x0 + width,  y0,
+      x0 + width,  y0 + height,
+      x0 + width,  y0 + height,
+      x0        ,  y0 + height,
+      x0        ,  y0,
     ]
-    count += 6;
-    rectangles = rectangles.concat(rectangle);
+  }
+
+  function buildF(x0, y0, sz, fr) {
+    let f = [];
+    f = f.concat(buildRectangle(0,        0,      sz, sz*fr));
+    f = f.concat(buildRectangle(sz,   sz*fr, sz*fr/3, -sz));
+    f = f.concat(buildRectangle(sz, sz*fr/2, sz*fr/4, -sz));
+    return f;
+  }
+
+  function set2dShape(gl, shape) {
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array(rectangles),
+      new Float32Array(shape),
       gl.STATIC_DRAW
     )
   }
@@ -74,4 +88,4 @@ function main() {
 
 main();
 
-console.log('geom2d.js loaded.');
+print('geom2d.js loaded.');

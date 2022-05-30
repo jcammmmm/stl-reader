@@ -5,7 +5,6 @@ function configureSlider(max, callback) {
   slider.setAttribute('min', 0);
   slider.setAttribute('max', max);
   slider.oninput = callback;
-  print(slider)
   document.body.append(slider);
 }
 
