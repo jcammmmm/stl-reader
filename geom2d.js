@@ -1,14 +1,21 @@
 var vertShader = `
-  attribute vec4    a_position;
+  attribute vec2    a_position;
   uniform   vec2    u_translation;
   uniform   vec2    u_rotation;
   uniform   vec2    u_scale;
 
-  void main() {
+  uniform   mat3    m_trans;
+  uniform   mat3    m_rotat;
+
+  void main2() {
     vec2 rot_position = vec2(a_position.x*u_rotation.y - a_position.y*u_rotation.x,
                              a_position.x*u_rotation.x + a_position.y*u_rotation.y);
     vec2 scaled_position = rot_position*u_scale;
     gl_Position = vec4(scaled_position + u_translation, 0, 1);
+  }
+
+  void main() {
+    gl_Position = vec4(m_trans*m_rotat*vec3(a_position, 1), 1);
   }
 `
 
@@ -20,6 +27,30 @@ var fragShader = `
     gl_FragColor = u_color;
   }
 `
+
+var m3 = {
+  translate: function(tx, ty) {
+    return [
+      1,  0,  0,
+      0,  1,  0,
+      tx, ty, 1,
+    ]
+  },
+  rotation: function(sin, cos) {
+    return [
+      cos,    -sin,     0,
+      sin,     cos,     0,
+        0,       0,     1,
+    ]
+  },
+  identity: function() {
+    return [
+      1,  0,  0,
+      0,  1,  0,
+      0,  0,  1,
+    ]
+  }
+}
 
 function main() {
   var canvas = document.getElementById('c');
@@ -35,15 +66,18 @@ function main() {
   
   gl.useProgram(program);
   var unifLocColor = gl.getUniformLocation(program, 'u_color');
-  var unifLocTrans = gl.getUniformLocation(program, 'u_translation');
-  var unifLocRotat = gl.getUniformLocation(program, 'u_rotation');
-  var unifLocScale = gl.getUniformLocation(program, 'u_scale');
+  var unifLocTrans = gl.getUniformLocation(program, 'u_translation');   // UNUSED
+  var unifLocRotat = gl.getUniformLocation(program, 'u_rotation');      // UNUSED
+  var unifLocScale = gl.getUniformLocation(program, 'u_scale');         // UNUSED
+
+  var unifLocMatTrans = gl.getUniformLocation(program, 'm_trans');
+  var unifLocMatRotat = gl.getUniformLocation(program, 'm_rotat');
   
-  setupSlider(0, gl.canvas.height);
-  setupSlider(1, gl.canvas.width);
-  setupSliderTurn(1);
-  setupSliderScale(0, 5);
-  setupSliderScale(1, 5);
+  setupSliderTrans(0, gl.canvas.height);
+  setupSliderTrans(1, gl.canvas.width);
+  setupSliderRotat(1);
+  // setupSliderScale(0, 5);
+  // setupSliderScale(1, 5);
   
   let translation = [0, 0];
   let rotation = [0, 1];
@@ -54,9 +88,13 @@ function main() {
 
   function drawScene() {
     gl.uniform4f(unifLocColor, 0.5, 0.5, 1 , 1);
-    gl.uniform2f(unifLocTrans, translation[0], translation[1]);
-    gl.uniform2f(unifLocRotat, rotation[0], rotation[1]);
-    gl.uniform2f(unifLocScale, scale[0], scale[1]);
+    gl.uniform2f(unifLocTrans, translation[0], translation[1]);       // UNUSED
+    gl.uniform2f(unifLocRotat, rotation[0], rotation[1]);             // UNUSED
+    gl.uniform2f(unifLocScale, scale[0], scale[1]);                   // UNUSED
+
+    gl.uniformMatrix3fv(unifLocMatTrans, false, m3.translate(translation[0], translation[1]));
+    gl.uniformMatrix3fv(unifLocMatRotat, false, m3.rotation(rotation[0], rotation[1]));
+
     gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
   }
 
@@ -69,7 +107,7 @@ function main() {
     })
   }
 
-  function setupSlider(axis, max) {
+  function setupSliderTrans(axis, max) {
     configureSlider(max, function(event) {
       let coord = parseInt(event.target.value);
       translation[axis] = coord/max*2 - 1;
@@ -77,7 +115,7 @@ function main() {
     });
   }
 
-  function setupSliderTurn(turns) {
+  function setupSliderRotat(turns) {
     let precision = 1000;
     configureSlider(2*turns*Math.PI*precision, function(event) {
       let rad = parseInt(event.target.value);
