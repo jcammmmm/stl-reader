@@ -1,21 +1,9 @@
 var vertShader = `
   attribute vec2    a_position;
-  uniform   vec2    u_translation;
-  uniform   vec2    u_rotation;
-  uniform   vec2    u_scale;
-
-  uniform   mat3    m_trans;
-  uniform   mat3    m_rotat;
-
-  void main2() {
-    vec2 rot_position = vec2(a_position.x*u_rotation.y - a_position.y*u_rotation.x,
-                             a_position.x*u_rotation.x + a_position.y*u_rotation.y);
-    vec2 scaled_position = rot_position*u_scale;
-    gl_Position = vec4(scaled_position + u_translation, 0, 1);
-  }
+  uniform   mat3    m_trfm;
 
   void main() {
-    gl_Position = vec4(m_trans*m_rotat*vec3(a_position, 1), 1);
+    gl_Position = vec4(m_trfm*vec3(a_position, 1), 1);
   }
 `
 
@@ -43,12 +31,46 @@ var m3 = {
         0,       0,     1,
     ]
   },
+  scale: function(sx, sy) {
+    return [
+      sx,  0,  0,
+      0,  sy,  0,
+      0,   0,  1,
+    ]
+  },
   identity: function() {
     return [
       1,  0,  0,
       0,  1,  0,
       0,  0,  1,
     ]
+  },
+  mult: function(A, B) {
+    let a00 = A[0]; let a01 = A[1]; let a02 = A[2];
+    let a10 = A[3]; let a11 = A[4]; let a12 = A[5];
+    let a20 = A[6]; let a21 = A[7]; let a22 = A[8];
+
+    let b00 = B[0]; let b01 = B[1]; let b02 = B[2];
+    let b10 = B[3]; let b11 = B[4]; let b12 = B[5];
+    let b20 = B[6]; let b21 = B[7]; let b22 = B[8];
+
+    let M = [
+      NaN, NaN, NaN,
+      NaN, NaN, NaN,
+      NaN, NaN, NaN,
+    ]
+
+    M[0] = a00*b00 + a01*b10 + a02*b20;
+    M[1] = a00*b01 + a01*b11 + a02*b21;
+    M[2] = a00*b02 + a01*b12 + a02*b22;
+    M[3] = a10*b00 + a11*b10 + a12*b20;
+    M[4] = a10*b01 + a11*b11 + a12*b21;
+    M[5] = a10*b02 + a11*b12 + a12*b22;
+    M[6] = a20*b00 + a21*b10 + a22*b20;
+    M[7] = a20*b01 + a21*b11 + a22*b21;
+    M[8] = a20*b02 + a21*b12 + a22*b22;
+
+    return M;
   }
 }
 
@@ -66,36 +88,32 @@ function main() {
   
   gl.useProgram(program);
   var unifLocColor = gl.getUniformLocation(program, 'u_color');
-  var unifLocTrans = gl.getUniformLocation(program, 'u_translation');   // UNUSED
-  var unifLocRotat = gl.getUniformLocation(program, 'u_rotation');      // UNUSED
-  var unifLocScale = gl.getUniformLocation(program, 'u_scale');         // UNUSED
-
-  var unifLocMatTrans = gl.getUniformLocation(program, 'm_trans');
-  var unifLocMatRotat = gl.getUniformLocation(program, 'm_rotat');
+  var unifLocMatTrfm = gl.getUniformLocation(program, 'm_trfm');
   
   setupSliderTrans(0, gl.canvas.height);
   setupSliderTrans(1, gl.canvas.width);
   setupSliderRotat(1);
-  // setupSliderScale(0, 5);
-  // setupSliderScale(1, 5);
+  setupSliderScale(0, 5);
+  setupSliderScale(1, 5);
   
-  let translation = [0, 0];
+  let translation = [0.15, -0.1];
   let rotation = [0, 1];
-  let scale = [1, 1];
+  let scale = [0.8, 0.8];
   
   let shape = buildF(0, 0, 0.05, 8);
+  
+  gl.uniform4f(unifLocColor, Math.random(), Math.random(), Math.random(), 1);
   set2dShape(gl, shape);
-
   function drawScene() {
-    gl.uniform4f(unifLocColor, 0.5, 0.5, 1 , 1);
-    gl.uniform2f(unifLocTrans, translation[0], translation[1]);       // UNUSED
-    gl.uniform2f(unifLocRotat, rotation[0], rotation[1]);             // UNUSED
-    gl.uniform2f(unifLocScale, scale[0], scale[1]);                   // UNUSED
-
-    gl.uniformMatrix3fv(unifLocMatTrans, false, m3.translate(translation[0], translation[1]));
-    gl.uniformMatrix3fv(unifLocMatRotat, false, m3.rotation(rotation[0], rotation[1]));
-
-    gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    let mat = m3.identity();
+    for (let i = 0; i < 2700; i++) {
+      mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
+      mat = m3.mult(mat, m3.rotation(rotation[0], rotation[1]));
+      mat = m3.mult(mat, m3.scale(scale[0], scale[1]));
+      gl.uniformMatrix3fv(unifLocMatTrfm, false, mat);
+      gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
+    }
   }
 
   function setupSliderScale(axis, max) {
