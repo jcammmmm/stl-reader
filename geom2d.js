@@ -17,6 +17,13 @@ var fragShader = `
 `
 
 var m3 = {
+  clip: function(resx, resy) {
+    return [
+      2/resx,      0,    0,
+       0,     2/resy,    0,
+      -1,         -1,    1
+    ]
+  },
   translate: function(tx, ty) {
     return [
       1,  0,  0,
@@ -77,7 +84,7 @@ var m3 = {
 function main() {
   var canvas = document.getElementById('c');
   var gl = canvas.getContext('webgl');
-  
+
   var program = createProgram(gl, vertShader, fragShader);
   
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
@@ -89,18 +96,21 @@ function main() {
   gl.useProgram(program);
   var unifLocColor = gl.getUniformLocation(program, 'u_color');
   var unifLocMatTrfm = gl.getUniformLocation(program, 'm_trfm');
+
+  let sz = 20;
+  let fr = 8;
+  let shape = buildF(0, 0, 20, 8);
+  let shapeCenter = [sz*(1 + fr)/6, sz*fr/2]
   
-  let translation = [0, 0];
+  let translation = [gl.canvas.width/2, gl.canvas.height/2];
   let rotation = [0, 1];
-  let scale = [0.8, 0.8];
+  let scale = [1, 1];
   
-  setupSliderTrans(0, gl.canvas.height);
-  setupSliderTrans(1, gl.canvas.width);
+  setupSliderTrans(0, gl.canvas.width);
+  setupSliderTrans(1, gl.canvas.height);
   setupSliderRotat(1);
   setupSliderScale(0, 5);
   setupSliderScale(1, 5);
-  
-  let shape = buildF(0, 0, 0.05, 8);
   
   gl.uniform4f(unifLocColor, Math.random(), Math.random(), Math.random(), 1);
   set2dShape(gl, shape);
@@ -108,10 +118,11 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     let mat = m3.identity();
     for (let i = 0; i < 1; i++) {
-      mat = m3.mult(mat, m3.translate(-.05500000000000005, -.21333333333333337))
+      mat = m3.mult(mat, m3.translate(-shapeCenter[0], -shapeCenter[1]));
       mat = m3.mult(mat, m3.rotation(rotation[0], rotation[1]));
-      mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
       mat = m3.mult(mat, m3.scale(scale[0], scale[1]));
+      mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
+      mat = m3.mult(mat, m3.clip(gl.canvas.width, gl.canvas.height));
       gl.uniformMatrix3fv(unifLocMatTrfm, false, mat);
       gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
     }
@@ -119,7 +130,7 @@ function main() {
 
   function setupSliderScale(axis, max) {
     let pres = 1000;
-    let label = document.createElement('label');
+    let label = document.createElement('label'); // TODO: this code is duplicated in each slider ...
     label.innerHTML = scale[axis];
     let div = configureSlider(max*pres, function(event) {
       let factor = parseInt(event.target.value);
@@ -136,7 +147,7 @@ function main() {
     label.innerHTML = translation[axis];
     let div = configureSlider(max, function(event) {
       let coord = parseInt(event.target.value);
-      translation[axis] = coord/max*2 - 1;
+      translation[axis] = coord;
       label.innerHTML = translation[axis];
       drawScene();
     });
@@ -151,7 +162,7 @@ function main() {
       let rad = parseInt(event.target.value);
       // TODO: The rotation also is scaling the object
       rotation = [Math.sin(rad/precision), Math.cos(rad/precision)];
-      label.innerHTML = rad;
+      label.innerHTML = rad/precision;
       drawScene();
     })
     div.appendChild(label);
@@ -170,7 +181,7 @@ function main() {
 
   function buildF(x0, y0, sz, fr) {
     let f = [];
-    f = f.concat(buildRectangle(0,        0,      sz, sz*fr));
+    f = f.concat(buildRectangle(x0,      y0,      sz, sz*fr));
     f = f.concat(buildRectangle(sz,   sz*fr, sz*fr/3, -sz));
     f = f.concat(buildRectangle(sz, sz*fr/2, sz*fr/4, -sz));
     return f;
