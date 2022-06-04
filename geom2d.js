@@ -108,8 +108,9 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     let mat = m3.identity();
     for (let i = 0; i < 1; i++) {
-      mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
+      mat = m3.mult(mat, m3.translate(-.05500000000000005, -.21333333333333337))
       mat = m3.mult(mat, m3.rotation(rotation[0], rotation[1]));
+      mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
       mat = m3.mult(mat, m3.scale(scale[0], scale[1]));
       gl.uniformMatrix3fv(unifLocMatTrfm, false, mat);
       gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
