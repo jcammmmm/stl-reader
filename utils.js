@@ -1,11 +1,14 @@
 function configureSlider(max, callback) {
+  let div = document.createElement('div');
   let slider = document.createElement('input');
   slider.setAttribute('type', 'range');
   slider.setAttribute('value', max/2); // TODO: Fix. This does not put the slider to the middle.
   slider.setAttribute('min', 0);
   slider.setAttribute('max', max);
   slider.oninput = callback;
-  document.body.append(slider);
+  div.appendChild(slider);
+  document.body.append(div);
+  return div;
 }
 
 function createShader(gl, shaderSource, type) {

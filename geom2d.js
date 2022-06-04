@@ -90,15 +90,15 @@ function main() {
   var unifLocColor = gl.getUniformLocation(program, 'u_color');
   var unifLocMatTrfm = gl.getUniformLocation(program, 'm_trfm');
   
+  let translation = [0, 0];
+  let rotation = [0, 1];
+  let scale = [0.8, 0.8];
+  
   setupSliderTrans(0, gl.canvas.height);
   setupSliderTrans(1, gl.canvas.width);
   setupSliderRotat(1);
   setupSliderScale(0, 5);
   setupSliderScale(1, 5);
-  
-  let translation = [0.15, -0.1];
-  let rotation = [0, 1];
-  let scale = [0.8, 0.8];
   
   let shape = buildF(0, 0, 0.05, 8);
   
@@ -107,7 +107,7 @@ function main() {
   function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     let mat = m3.identity();
-    for (let i = 0; i < 2700; i++) {
+    for (let i = 0; i < 1; i++) {
       mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
       mat = m3.mult(mat, m3.rotation(rotation[0], rotation[1]));
       mat = m3.mult(mat, m3.scale(scale[0], scale[1]));
@@ -118,29 +118,42 @@ function main() {
 
   function setupSliderScale(axis, max) {
     let pres = 1000;
-    configureSlider(max*pres, function(event) {
+    let label = document.createElement('label');
+    label.innerHTML = scale[axis];
+    let div = configureSlider(max*pres, function(event) {
       let factor = parseInt(event.target.value);
       scale[axis] = 2*factor/pres - max;
+      label.innerHTML = scale[axis];
       drawScene();
-    })
+    });
+    div.appendChild(label);
+
   }
 
   function setupSliderTrans(axis, max) {
-    configureSlider(max, function(event) {
+    let label = document.createElement('label');
+    label.innerHTML = translation[axis];
+    let div = configureSlider(max, function(event) {
       let coord = parseInt(event.target.value);
       translation[axis] = coord/max*2 - 1;
+      label.innerHTML = translation[axis];
       drawScene();
     });
+    div.appendChild(label);
   }
 
   function setupSliderRotat(turns) {
     let precision = 1000;
-    configureSlider(2*turns*Math.PI*precision, function(event) {
+    let label = document.createElement('label');
+    label.innerHTML = 0;
+    let div = configureSlider(2*turns*Math.PI*precision, function(event) {
       let rad = parseInt(event.target.value);
       // TODO: The rotation also is scaling the object
       rotation = [Math.sin(rad/precision), Math.cos(rad/precision)];
+      label.innerHTML = rad;
       drawScene();
     })
+    div.appendChild(label);
   }
 
   function buildRectangle(x0, y0, width, height) {
