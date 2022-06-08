@@ -76,8 +76,41 @@ function M4() {
     this.val = this.mult([
       2/rx,     0,     0,    0,
          0,  2/ry,     0,    0,
-         0,     0,  2/rz,    0,
-        -1,    -1,    -1,    1,
+         0,     0,  1/rz,    0,
+        -1,    -1,     0,    1,
+    ]);
+  }
+
+  this.rotatez = function(rad) {
+    let c = Math.cos(rad);
+    let s = Math.sin(rad);
+    this.val = this.mult([
+      c, -s,  0,  0,
+      s,  c,  0,  0,
+      0,  0,  1,  0,
+      0,  0,  0,  1
+    ]);
+  }
+
+  this.rotatey = function(rad) {
+    let c = Math.cos(rad);
+    let s = Math.sin(rad);
+    this.val = this.mult([
+      c,  0, -s,  0,
+      0,  1,  0,  0,
+      s,  0,  c,  0,
+      0,  0,  0,  1
+    ]);
+  }
+
+  this.rotatex = function(rad) {
+    let c = Math.cos(rad);
+    let s = Math.sin(rad);
+    this.val = this.mult([
+      1,  0,  0,  0,
+      0,  c, -s,  0,
+      0,  s,  c,  0,
+      0,  0,  0,  1
     ]);
   }
 
