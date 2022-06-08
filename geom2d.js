@@ -16,71 +16,6 @@ var fragShader = `
   }
 `
 
-var m3 = {
-  clip: function(resx, resy) {
-    return [
-      2/resx,      0,    0,
-       0,     2/resy,    0,
-      -1,         -1,    1
-    ]
-  },
-  translate: function(tx, ty) {
-    return [
-      1,  0,  0,
-      0,  1,  0,
-      tx, ty, 1,
-    ]
-  },
-  rotation: function(sin, cos) {
-    return [
-      cos,    -sin,     0,
-      sin,     cos,     0,
-        0,       0,     1,
-    ]
-  },
-  scale: function(sx, sy) {
-    return [
-      sx,  0,  0,
-      0,  sy,  0,
-      0,   0,  1,
-    ]
-  },
-  identity: function() {
-    return [
-      1,  0,  0,
-      0,  1,  0,
-      0,  0,  1,
-    ]
-  },
-  mult: function(A, B) {
-    let a00 = A[0]; let a01 = A[1]; let a02 = A[2];
-    let a10 = A[3]; let a11 = A[4]; let a12 = A[5];
-    let a20 = A[6]; let a21 = A[7]; let a22 = A[8];
-
-    let b00 = B[0]; let b01 = B[1]; let b02 = B[2];
-    let b10 = B[3]; let b11 = B[4]; let b12 = B[5];
-    let b20 = B[6]; let b21 = B[7]; let b22 = B[8];
-
-    let M = [
-      NaN, NaN, NaN,
-      NaN, NaN, NaN,
-      NaN, NaN, NaN,
-    ]
-
-    M[0] = a00*b00 + a01*b10 + a02*b20;
-    M[1] = a00*b01 + a01*b11 + a02*b21;
-    M[2] = a00*b02 + a01*b12 + a02*b22;
-    M[3] = a10*b00 + a11*b10 + a12*b20;
-    M[4] = a10*b01 + a11*b11 + a12*b21;
-    M[5] = a10*b02 + a11*b12 + a12*b22;
-    M[6] = a20*b00 + a21*b10 + a22*b20;
-    M[7] = a20*b01 + a21*b11 + a22*b21;
-    M[8] = a20*b02 + a21*b12 + a22*b22;
-
-    return M;
-  }
-}
-
 function main() {
   var canvas = document.getElementById('c');
   var gl = canvas.getContext('webgl');
@@ -99,7 +34,7 @@ function main() {
 
   let sz = 20;
   let fr = 8;
-  let shape = buildF(0, 0, 20, 8);
+  let shape = buildF(0, 0, sz, fr);
   let shapeCenter = [sz*(1 + fr)/6, sz*fr/2]
   
   let translation = [gl.canvas.width/2, gl.canvas.height/2];
@@ -122,7 +57,7 @@ function main() {
       mat = m3.mult(mat, m3.rotation(rotation[0], rotation[1]));
       mat = m3.mult(mat, m3.scale(scale[0], scale[1]));
       mat = m3.mult(mat, m3.translate(translation[0], translation[1]));
-      mat = m3.mult(mat, m3.clip(gl.canvas.width, gl.canvas.height));
+      mat = m3.mult(mat, m3.projection(gl.canvas.width, gl.canvas.height));
       gl.uniformMatrix3fv(unifLocMatTrfm, false, mat);
       gl.drawArrays(gl.TRIANGLES, 0, shape.length/pointSize);
     }
@@ -167,38 +102,8 @@ function main() {
     })
     div.appendChild(label);
   }
-
-  function buildRectangle(x0, y0, width, height) {
-    return [
-      x0,          y0,
-      x0 + width,  y0,
-      x0 + width,  y0 + height,
-      x0 + width,  y0 + height,
-      x0        ,  y0 + height,
-      x0        ,  y0,
-    ]
-  }
-
-  function buildF(x0, y0, sz, fr) {
-    let f = [];
-    f = f.concat(buildRectangle(x0,      y0,      sz, sz*fr));
-    f = f.concat(buildRectangle(sz,   sz*fr, sz*fr/3, -sz));
-    f = f.concat(buildRectangle(sz, sz*fr/2, sz*fr/4, -sz));
-    return f;
-  }
-
-  function set2dShape(gl, shape) {
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(shape),
-      gl.STATIC_DRAW
-    )
-  }
-
   drawScene();
 }
-
-
 
 main();
 
