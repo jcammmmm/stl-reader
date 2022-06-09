@@ -17,7 +17,7 @@ function createShader(gl, shaderSource, type) {
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     var info = gl.getShaderInfoLog(shader);
-    throw 'No se pudo comilar el shader.\nDetalles:\n' + info;
+    throw 'No se pudo comilar el shader.\n[' + (type == 0x8B31 ? 'vertex' : 'fragment') + ' shader]\nDetalles:\n' + info;
   }
   return shader;
 }
