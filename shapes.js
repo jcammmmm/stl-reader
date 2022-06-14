@@ -106,6 +106,9 @@ function colorRectangle(r, g, b) {
 function buildOrto3dF(a, b, s, f) {
   let F = []; // shape
   let c = []; // colors
+    // magenta
+    F = F.concat(buildOrto3dRectangle(false, 0, s, s*f - s, 0, -s*f + 2*s + s*f/2, -s));
+    c = c.concat(colorRectangle(1, 0, 1));
   // black - front F
   F = F.concat(buildOrto3dRectangle(false, 2, 0, 0, 0, s, s*f));
   c = c.concat(colorRectangle(0, 0, 0));
@@ -132,9 +135,7 @@ function buildOrto3dF(a, b, s, f) {
   // cyan
   F = F.concat(buildOrto3dRectangle(true, 1, s, s*f - s, 0, s*f/2, -s));
   c = c.concat(colorRectangle(0, 1, 1));
-  // magenta
-  F = F.concat(buildOrto3dRectangle(false, 0, s, s*f - s, 0, -s*f + 2*s + s*f/2, -s));
-  c = c.concat(colorRectangle(1, 0, 1));
+
   // yellow
   F = F.concat(buildOrto3dRectangle(false, 1, s, s + s*f/2, 0, s*f/3, -s));  
   c = c.concat(colorRectangle(1, 1, 0));

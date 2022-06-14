@@ -72,12 +72,25 @@ function M4() {
     ]);
   }
 
-  this.transform = function(rx, ry, rz) {
+  this.transform = function(rx, ry, rz) { // projection
     this.val = this.mult([
       2/rx,     0,     0,    0,
          0,  2/ry,     0,    0,
          0,     0,  1/rz,    0,
         -1,    -1,     0,    1,
+    ]);
+  }
+
+  this.orthographic = function(right, left, top, bottom, near, far) {
+    this.val = this.mult([
+      2/(right - left), 0, 0, 0,
+      0, 2/(top - bottom), 0, 0,
+      0, 0, 2/(near - far), 0,
+      
+      (right + left)/-(right - left),
+      (top + bottom)/-(top - bottom),
+      (near + far)/(near - far),
+      1
     ]);
   }
 

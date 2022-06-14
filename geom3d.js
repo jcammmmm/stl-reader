@@ -35,7 +35,7 @@ function main() {
   setupSliderRt(2, 1);
 
   let tr = [300, 200, 0];  // translation 
-  let rt = [0, 0, 0];  // rotation
+  let rt = [0.6, 0.9, 0];  // rotation
   
   // let shape = build3dTriangle(40);
   // let shape = buildF(0, 0, 20, 8);
@@ -56,13 +56,15 @@ function main() {
   
   function draw() {
     gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
     let mat = new M4();
     mat.scale(1, 1, 1);
     mat.rotatex(rt[0]);
     mat.rotatey(rt[1]);
     mat.rotatez(rt[2]);
     mat.translate(tr[0], tr[1], tr[2]);
-    mat.transform(gl.canvas.width, gl.canvas.height, gl.canvas.width);
+    mat.orthographic(gl.canvas.width, 0, gl.canvas.height, 0, 400, -400);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
     gl.drawArrays(gl.TRIANGLES, 0, shape.geom.length/POINT_SZ);
   }
