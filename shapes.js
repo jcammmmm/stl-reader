@@ -26,7 +26,7 @@ function build3dTriangle(sz) {
 }
 
 /**
- * 
+ * @param {boolean} facing true if front facing, false otherwise.
  * @param {integer} axis the perpedicular plane to draw.
  * @param {float} a x0 starting point
  * @param {flaot} b y0 starting point
@@ -35,9 +35,10 @@ function build3dTriangle(sz) {
  * @param {float} h height
  * @returns plain rectangle coordinates perpendicular to axis
  */
-function buildOrto3dRectangle(axis, a, b, c, w, h) {
+function buildOrto3dRectangle(facing, axis, a, b, c, w, h) {
+  let shape = []
   if (axis == 2) // z
-    return [
+    shape = [
       a,         b,     c,
       a + w,     b,     c,
       a + w, b + h,     c,
@@ -46,7 +47,7 @@ function buildOrto3dRectangle(axis, a, b, c, w, h) {
       a,         b,     c
     ]
   if (axis == 1) // y
-    return [
+    shape = [
       a,     b,         c,     
       a + w, b,         c,     
       a + w, b,     c + h,     
@@ -55,7 +56,7 @@ function buildOrto3dRectangle(axis, a, b, c, w, h) {
       a,     b,         c,         
     ]
   if (axis == 0) // x
-    return [
+    shape = [
       a,     b,         c,
       a,     b + w,     c,
       a,     b + w, c + h,
@@ -63,6 +64,24 @@ function buildOrto3dRectangle(axis, a, b, c, w, h) {
       a,     b,     c + h,
       a,     b,         c,     
     ]
+  if (!facing) {
+    let tmp = shape.slice(3, 6);
+    shape[3] = shape[6];
+    shape[4] = shape[7];
+    shape[5] = shape[8];
+    shape[6] = tmp[0];
+    shape[7] = tmp[1];
+    shape[8] = tmp[2];
+
+    tmp = shape.slice(3 + 9, 6 + 9);
+    shape[3 + 9] = shape[6 + 9];
+    shape[4 + 9] = shape[7 + 9];
+    shape[5 + 9] = shape[8 + 9];
+    shape[6 + 9] = tmp[0];
+    shape[7 + 9] = tmp[1];
+    shape[8 + 9] = tmp[2];
+  }
+  return shape;
 }
 
 function colorRectangle(r, g, b) {
@@ -87,49 +106,49 @@ function colorRectangle(r, g, b) {
 function buildOrto3dF(a, b, s, f) {
   let F = []; // shape
   let c = []; // colors
-  // front F
-  F = F.concat(buildOrto3dRectangle(2, 0, 0, 0, s, s*f));
+  // black - front F
+  F = F.concat(buildOrto3dRectangle(false, 2, 0, 0, 0, s, s*f));
   c = c.concat(colorRectangle(0, 0, 0));
-  F = F.concat(buildOrto3dRectangle(2, s, s*f, 0, s*f/2, -s));
+  F = F.concat(buildOrto3dRectangle(true, 2, s, s*f, 0, s*f/2, -s));
   c = c.concat(colorRectangle(0, 0, 0));
-  F = F.concat(buildOrto3dRectangle(2, s, s*f/2, 0, s*f/3, s));
+  F = F.concat(buildOrto3dRectangle(false, 2, s, s*f/2, 0, s*f/3, s));
   c = c.concat(colorRectangle(0, 0, 0));
-  // back F
-  F = F.concat(buildOrto3dRectangle(2, 0, 0, -s, s, s*f));
+  // blue - back F
+  F = F.concat(buildOrto3dRectangle(true, 2, 0, 0, -s, s, s*f));
   c = c.concat(colorRectangle(0, 0, 1));
-  F = F.concat(buildOrto3dRectangle(2, s, s*f, -s, s*f/2, -s));
+  F = F.concat(buildOrto3dRectangle(false, 2, s, s*f, -s, s*f/2, -s));
   c = c.concat(colorRectangle(0, 0, 1));
-  F = F.concat(buildOrto3dRectangle(2, s, s*f/2, -s, s*f/3, s));
+  F = F.concat(buildOrto3dRectangle(true, 2, s, s*f/2, -s, s*f/3, s));
   c = c.concat(colorRectangle(0, 0, 1));
   // green
-  F = F.concat(buildOrto3dRectangle(0, 0, 0, 0, s*f, -s));
+  F = F.concat(buildOrto3dRectangle(false, 0, 0, 0, 0, s*f, -s));
   c = c.concat(colorRectangle(0, 1, 0));
   // cyan - upper
-  F = F.concat(buildOrto3dRectangle(1, 0, s*f, 0, s*f/2 + s, -s));
+  F = F.concat(buildOrto3dRectangle(false, 1, 0, s*f, 0, s*f/2 + s, -s));
   c = c.concat(colorRectangle(0, 1, 1));
   // red
-  F = F.concat(buildOrto3dRectangle(0, s*f/2 + s, s*f, 0, -s, -s));
+  F = F.concat(buildOrto3dRectangle(false, 0, s*f/2 + s, s*f, 0, -s, -s));
   c = c.concat(colorRectangle(1, 0, 0));
   // cyan
-  F = F.concat(buildOrto3dRectangle(1, s, s*f - s, 0, s*f/2, -s));
+  F = F.concat(buildOrto3dRectangle(true, 1, s, s*f - s, 0, s*f/2, -s));
   c = c.concat(colorRectangle(0, 1, 1));
   // magenta
-  F = F.concat(buildOrto3dRectangle(0, s, s*f - s, 0, -s*f + 2*s + s*f/2, -s));
+  F = F.concat(buildOrto3dRectangle(false, 0, s, s*f - s, 0, -s*f + 2*s + s*f/2, -s));
   c = c.concat(colorRectangle(1, 0, 1));
   // yellow
-  F = F.concat(buildOrto3dRectangle(1, s, s + s*f/2, 0, s*f/3, -s));  
+  F = F.concat(buildOrto3dRectangle(false, 1, s, s + s*f/2, 0, s*f/3, -s));  
   c = c.concat(colorRectangle(1, 1, 0));
   // grey
-  F = F.concat(buildOrto3dRectangle(0, s*f/3 + s, s*f/2 + s, 0, -s, -s));
+  F = F.concat(buildOrto3dRectangle(false, 0, s*f/3 + s, s*f/2 + s, 0, -s, -s));
   c = c.concat(colorRectangle(0.5, 0.5, 0.5));
   // purple
-  F = F.concat(buildOrto3dRectangle(1, s, s*f/2, 0, s*f/3, -s));  
+  F = F.concat(buildOrto3dRectangle(true, 1, s, s*f/2, 0, s*f/3, -s));  
   c = c.concat(colorRectangle(0.5, 0.5, 1));
   // oliva
-  F = F.concat(buildOrto3dRectangle(0, s, 0, 0, s*f/2, -s));  
+  F = F.concat(buildOrto3dRectangle(true, 0, s, 0, 0, s*f/2, -s));  
   c = c.concat(colorRectangle(0.2, 0.3, 0.1));
   // bronze oxide
-  F = F.concat(buildOrto3dRectangle(1, 0, 0, 0, s, -s));  
+  F = F.concat(buildOrto3dRectangle(true, 1, 0, 0, 0, s, -s));  
   c = c.concat(colorRectangle(0.5, 0.8, 0.7));
 
   return {

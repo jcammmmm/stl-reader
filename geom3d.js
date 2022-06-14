@@ -55,6 +55,7 @@ function main() {
   gl.enableVertexAttribArray(attrColorPosition);
   
   function draw() {
+    gl.enable(gl.CULL_FACE);
     let mat = new M4();
     mat.scale(1, 1, 1);
     mat.rotatex(rt[0]);
