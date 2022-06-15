@@ -1,11 +1,13 @@
 var vertShader = `
-  attribute vec4 a_position;
-  attribute vec4 a_color;
-  uniform   mat4 u_mat;
-  varying   vec4 v_color;
+  attribute vec4  a_position;
+  attribute vec4  a_color;
+  uniform   float u_ffactor;
+  uniform   mat4  u_mat;
+  varying   vec4  v_color;
 
   void main() {
-    gl_Position = u_mat*a_position;
+    vec4 v = u_mat*a_position;
+    gl_Position = vec4(v.xyz, 1.0 + u_ffactor*v.z);
     v_color = a_color;
   }
 `
@@ -25,6 +27,7 @@ function main() {
   let program = createProgram(gl, vertShader, fragShader);
 
   let unifLocMatrix = gl.getUniformLocation(program, 'u_mat');
+  let unifLocFFactor = gl.getUniformLocation(program, 'u_ffactor');
 
   gl.useProgram(program);
   setupSliderTr(0, gl.canvas.width);
@@ -33,9 +36,11 @@ function main() {
   setupSliderRt(0, 1);
   setupSliderRt(1, 1);
   setupSliderRt(2, 1);
+  setupSliderFf(3);
 
   let tr = [300, 200, 0];  // translation 
   let rt = [0.6, 0.9, 0];  // rotation
+  let ff = 0;
   
   // let shape = build3dTriangle(40);
   // let shape = buildF(0, 0, 20, 8);
@@ -66,6 +71,7 @@ function main() {
     mat.translate(tr[0], tr[1], tr[2]);
     mat.orthographic(gl.canvas.width, 0, gl.canvas.height, 0, 400, -400);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
+    gl.uniform1f(unifLocFFactor, ff);
     gl.drawArrays(gl.TRIANGLES, 0, shape.geom.length/POINT_SZ);
   }
 
@@ -85,6 +91,17 @@ function main() {
     let div = configureSlider(2*Math.PI*turns*pres, function(e) {
       rt[axis] = parseInt(e.target.value)/pres;
       label.innerHTML = rt[axis];
+      draw();
+    })
+    div.appendChild(label);
+  }
+
+  function setupSliderFf(max) {
+    let label = document.createElement('label');
+    let pres = 10;
+    let div = configureSlider(pres*max, function(e) {
+      ff = parseInt(e.target.value)/pres;
+      label.innerHTML = ff;
       draw();
     })
     div.appendChild(label);
