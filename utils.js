@@ -63,6 +63,18 @@ function M4() {
     ]);
   }
 
+  this.perspective = function(fov, width, height, near, far) {
+    // let f = Math.tan(0.5*(Math.PI - fov));
+    let rangeInv = 1.0/(near - far);
+
+    this.val = this.mult([
+      near/(0.5*width), 0, 0, 0,
+      0, far/(0.5*height), 0, 0, 
+      0, 0, (near + far)*rangeInv, -1,
+      0, 0, 2.0*near*far*rangeInv, 0,
+    ]);
+  }
+
   this.translate = function(tx, ty, tz) {
     this.val = this.mult([
       1,  0,  0,  0,
@@ -89,7 +101,7 @@ function M4() {
       
       (right + left)/-(right - left),
       (top + bottom)/-(top - bottom),
-      (near + far)/(near - far),
+      (near + far)/-(near - far),
       1
     ]);
   }
