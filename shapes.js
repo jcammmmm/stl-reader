@@ -30,7 +30,7 @@ function build3dTriangle(sz) {
  * @param {integer} axis the perpedicular plane to draw.
  * @param {float} a x0 starting point
  * @param {flaot} b y0 starting point
- * @param {float} c z0 starting point
+ * @param {float} c depth on the given axis
  * @param {float} w width
  * @param {float} h height
  * @returns plain rectangle coordinates perpendicular to axis

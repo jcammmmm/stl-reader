@@ -83,11 +83,13 @@ async function openStlFile() {
   const facets = await readChunk(4, fileHandle, buffer => buffer.readInt32LE(0));
   console.log(facets);
   // triangular facet
+  let triangles = [];
   for(var i = 0; i < facets; i++) {
     let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
+    triangles.push(facet);
     console.log(facet);
   }
-  
+  return triangles;
 }
 
 /**
@@ -136,5 +138,3 @@ function printBufferAsInteger(buffer) {
   console.log(n);
   return n;
 }
-
-openStlFile();

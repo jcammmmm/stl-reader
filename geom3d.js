@@ -7,7 +7,8 @@ var vertShader = `
 
   void main() {
     vec4 v = u_mat*a_position;
-    gl_Position = vec4(v.xyz, 1.0 + u_ffactor*v.z);
+    gl_Position = v;
+    // gl_Position = vec4(v.xyz, 1.0 + v.z);
     v_color = a_color;
   }
 `
@@ -37,11 +38,11 @@ function main() {
   setupSliderRt(0, 1);
   setupSliderRt(1, 1);
   setupSliderRt(2, 1);
-  setupSliderFf(10);
+  setupSliderFf(Math.PI);
 
-  let tr = [0, 0, 400];  // translation 
+  let tr = [0, 0, 0];  // translation 
   let rt = [0.6, 0.9, 0];  // rotation
-  let ff = 1;
+  let ff = Math.PI/3;
   
   // let shape = build3dTriangle(40);
   // let shape = buildF(0, 0, 20, 8);
@@ -70,8 +71,8 @@ function main() {
     mat.rotatey(rt[1]);
     mat.rotatez(rt[2]);
     mat.translate(tr[0], tr[1], tr[2]);
-    mat.perspective(ff, gl.canvas.clientWidth, gl.canvas.clientHeight, -DEPTH_SZ/2, DEPTH_SZ/2);
-    // mat.orthographic(gl.canvas.width, 0, gl.canvas.height, 0, DEPTH_SZ, 0);
+    // mat.perspective(ff, gl.canvas.clientWidth, gl.canvas.clientHeight, -DEPTH_SZ/2, DEPTH_SZ/2);
+    mat.orthographic(gl.canvas.width, 0, gl.canvas.height, 0, DEPTH_SZ, 0);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
     gl.uniform1f(unifLocFFactor, ff);
     gl.drawArrays(gl.TRIANGLES, 0, shape.geom.length/POINT_SZ);
@@ -100,7 +101,7 @@ function main() {
 
   function setupSliderFf(max) {
     let label = document.createElement('label');
-    let pres = 10;
+    let pres = 1000;
     let div = configureSlider(pres*max, function(e) {
       ff = parseInt(e.target.value)/pres;
       label.innerHTML = ff;

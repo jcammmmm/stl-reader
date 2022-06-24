@@ -68,8 +68,8 @@ function M4() {
     let rangeInv = 1.0/(near - far);
 
     this.val = this.mult([
-      near/(0.5*width), 0, 0, 0,
-      0, far/(0.5*height), 0, 0, 
+      2*near/(width), 0, 1, 0,
+      0, 2*far/(height), 1, 0, 
       0, 0, (near + far)*rangeInv, -1,
       0, 0, 2.0*near*far*rangeInv, 0,
     ]);
