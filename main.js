@@ -1,10 +1,81 @@
-const fs = require("fs/promises");
+var HTTP_FILE_TRANSFER_ENABLE = true;
 
-const filepath = "/Users/juan.florez/Downloads/cube.stl";
+if (HTTP_FILE_TRANSFER_ENABLE) {
+  var FileHandle = class {
+    constructor(data) {
+      this.data = data;
+      this.position = 0;
+    }
+
+    read(buffer, length) {
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/slice
+      buffer.data = this.data.slice(this.position, this.position + length);
+      this.position += length;
+      return buffer;
+    }
+  }
+
+  var BufferImpl = class {
+    constructor(bytes) {
+      this.data = new ArrayBuffer(bytes);
+    };
+
+    toString(enconding) {
+      if (enconding == 'ascii') {
+        let str = new Uint8Array(this.data);
+        for(let i in str) {
+          if (str[i] == 0)
+            str[i] = 32;
+        }
+        return (new TextDecoder("UTF-8")).decode(str);
+      } else {
+        throw Error(enconding + ' is not a valid encoding.')
+      }
+    }
+
+    readInt32LE(offset) {
+      return (new DataView(this.data)).getInt32(offset, true);
+    }
+
+    readFloatLE(offset) {
+      return (new DataView(this.data)).getFloat32(offset, true);
+    }
+  }
+
+  var readChunk = function(bytes, fileHandle, parseCallback) {
+    let buffer = new BufferImpl(bytes);
+    return parseCallback(fileHandle.read(buffer, bytes));
+  }
+} else {
+  var fs = require("fs/promises");
+  /**
+   * Allocates a buffer, reads a chunk of bytes size, then parses
+   * this chunk with the provided parseCallback and return the 
+   * parsing results.
+   * @param {int} bytes 
+   * @param {FileHandle} fileHandle 
+   * @param {Function} parseCallback
+   * @returns a value after chunk casting
+   */
+  var readChunk = function (bytes, fileHandle, parseCallback) {
+    let buffer = Buffer.alloc(bytes);
+    let chunk = fileHandle.read(buffer, 0, bytes, null);
+    return chunk.then(value => parseCallback(value.buffer))
+  }
+}
 
 // file structure in http://www.fabbers.com/tech/STL_Format
 async function openStlFile() {
-  const fileHandle = await fs.open(filepath);
+  let fileHandle;
+  if (HTTP_FILE_TRANSFER_ENABLE) {
+    response = await fetch("http://127.0.0.1:5500/stl/cube.stl");
+    let reader = response.body.getReader();
+    let data = await reader.read();
+    fileHandle = new FileHandle(data.value.buffer);
+  } 
+  else {
+    fileHandle = await fs.open("./stl/cube.stl");
+  }
   // read header
   const header = await readChunk(80, fileHandle, buffer => buffer.toString('ascii'));
   console.log(header);
@@ -16,21 +87,7 @@ async function openStlFile() {
     let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
     console.log(facet);
   }
-}
-
-/**
- * Allocates a buffer, reads a chunk of bytes size, then parses
- * this chunk with the provided parseCallback and return the 
- * parsing results.
- * @param {int} bytes 
- * @param {FileHandle} fileHandle 
- * @param {Function} parseCallback 
- * @returns a value after chunk casting
- */
-function readChunk(bytes, fileHandle, parseCallback) {
-  var buffer = Buffer.alloc(bytes);
-  var chunk = fileHandle.read(buffer, 0, bytes, null);
-  return chunk.then(value => parseCallback(value.buffer))
+  
 }
 
 /**
@@ -77,7 +134,7 @@ function printBufferAsInteger(buffer) {
     int.push(b[1])
   var n = Number(int.reverse().join(''))
   console.log(n);
-  return n
+  return n;
 }
 
 openStlFile();
