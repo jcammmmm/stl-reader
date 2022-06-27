@@ -1,18 +1,19 @@
 var vertShader = `
+  #define CUBE_PLAYGROUDS2
   attribute vec3  a_pos;
-  bool            t       = true;
+  bool            t       = false;
 
   void main() {
-    if (t) {
+    #if defined(CUBE_PLAYGROUNDS)
       vec4 v = vec4(0, 0, 0, 0);
       if (a_pos.x < a_pos.y)
         v = vec4(a_pos, 0.8);
       else
         v = vec4(a_pos, 1.8);
       gl_Position = v;
-    } else {
-      gl_Position = vec4(a_pos, 1);
-    }
+    #else
+      gl_Position = vec4(a_pos, 3);
+    #endif
   }
 `
 
@@ -24,7 +25,7 @@ var fragShader = `
     gl_FragColor = u_color;
   }
 `
-function main() {
+async function main() {
   let gl = document.getElementById('c').getContext('webgl');
   let program = createProgram(gl, vertShader, fragShader);
   gl.useProgram(program);
@@ -41,12 +42,18 @@ function main() {
     gl.drawArrays(mode, 0, shape.length/3);
   }
 
-  draw(buildOrto3dRectangle(true, 2, -0.50, -0.60, 0.1, 0.90, 0.80), [0.2, 0.3, 0.4, 0.5], gl.TRIANGLES); // grey
-  draw(buildOrto3dRectangle(true, 2,-0.40, -0.70, 0.2, 0.30, 1.00), [0.4, 0.3, 0.1, 0.5], gl.TRIANGLES); // yellow
-  draw([-1.0, -1.0, 0.0, 1.0, 1.0, 0.0], [0, 0, 0, 1], gl.LINES);
-  draw([ 0.0, -1.0, 0.0, 0.0, 1.0, 0.0], [0, 0, 0, 1], gl.LINES);
-  draw([-1.0,  0.0, 0.0, 1.0, 0.0, 0.0], [0, 0, 0, 1], gl.LINES);
-  print(openStlFile());
+  // If x, y belongs to z and x < y, then x will appear nearer that y to the screen.
+  // draw(buildOrto3dRectangle(true, 2, -0.50, -0.60, 0.3, 0.90, 0.80), [0.2, 0.3, 0.4, 0.5], gl.TRIANGLES); // blue cream
+  // draw(buildOrto3dRectangle(true, 2,-0.40, -0.70, 0.2, 0.30, 1.00), [0.4, 0.3, 0.1, 0.5], gl.TRIANGLES); // yellow cream
+  // draw([-1.0, -1.0, 0.0, 1.0, 1.0, 0.0], [0, 0, 0, 1], gl.LINES);
+  // draw([ 0.0, -1.0, 0.0, 0.0, 1.0, 0.0], [0, 0, 0, 1], gl.LINES);
+  // draw([-1.0,  0.0, 0.0, 1.0, 0.0, 0.0], [0, 0, 0, 1], gl.LINES);
+  let verts = await openStlFile();
+  let s = [];
+  for(v of verts) 
+    s = s.concat(v[1], v[2], v[3]);
+  printAs3dCoordinates(s);
+  draw(s, [0.1, 0.2, 0.3, 0.5], gl.TRIANGLES);
 }
 print('drafts.js loaded.');
 main();

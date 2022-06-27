@@ -47,6 +47,9 @@ function set2dShape(gl, shape) {
 }
 
 function M4() {
+  /**
+   * A new instance of this class defaults to the identity matrix.
+   */
   this.val = [
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -82,6 +85,12 @@ function M4() {
       0,  0,  1,  0, 
      tx, ty, tz,  1,
     ]);
+  }
+
+  this.rotate = function(rx, ry, rz) {
+    this.rotatex(rx);
+    this.rotatey(ry);
+    this.rotatez(rz);
   }
 
   this.transform = function(rx, ry, rz) { // projection
@@ -251,6 +260,41 @@ function printMat(matArr) {
   } else {
     throw Error('This is not a square matrix.');
   }
+}
+
+/**
+ * Print the list of numbers as triplets with the folowing format:
+ *    (a, b, c)
+ * where a, b, c are elements of arrOfNums.
+ * @param {Array} arrOfNums list of numbers.
+ */
+function printAs3dCoordinates(arrOfNums) {
+  for(let i = 0; i < arrOfNums.length; i += 3)
+    console.log('(' + formatNumber(arrOfNums[i]) + ', ', formatNumber(arrOfNums[i + 1]) + ', ' + formatNumber(arrOfNums[i + 2]) + ')');
+}
+
+/**
+ * Takes a number and then return its representation as string that has
+ * leading and trailing spaces.
+ * @param {number} num 
+ * @param {integer} sz 
+ */
+function formatNumber(num, sz=10) {
+  [int, dec] = String(num).split('.');
+  let repr = '';
+  let lt = int.length;
+  if (lt > sz)
+    throw Error('Integer part is greater than the specified size of', sz);
+  for(let i = 0; i < sz - lt; i++)
+    repr += ' ';
+  repr += int;
+  if (dec == undefined)
+    dec = '';
+  repr += '.' + dec.substr(0, sz);
+  lt = dec.length;
+  for(let i = 0; i < sz - lt; i++)
+    repr += '0';
+  return repr;
 }
 
 console.log('utils.js loaded.')

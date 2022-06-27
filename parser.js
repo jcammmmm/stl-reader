@@ -65,6 +65,11 @@ if (HTTP_FILE_TRANSFER_ENABLE) {
 }
 
 // file structure in http://www.fabbers.com/tech/STL_Format
+// TODO: read file by chunks of 10kb for RAM performance.
+/**
+ * @returns an object that holds the 3D vertex point array (ignoring the normal vectors)
+ * of triangles and an array of colors that colorize each triangle with a random color.
+ */
 async function openStlFile() {
   let fileHandle;
   if (HTTP_FILE_TRANSFER_ENABLE) {
@@ -84,19 +89,27 @@ async function openStlFile() {
   console.log(facets);
   // triangular facet
   let triangles = [];
+  let colors = [];
   for(var i = 0; i < facets; i++) {
     let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
-    triangles.push(facet);
-    console.log(facet);
+    triangles = triangles.concat(facet[1], facet[2], facet[3]);
+    let color = [Math.random(), Math.random(), Math.random()]
+    colors    = colors.concat(color, color, color);
   }
-  return triangles;
+  return {
+    geom: triangles,
+    color: colors
+  };
 }
 
 /**
- * 
+ * Reads the stl file and captures four numbers that represents one triangle 
+ * with its normal vector within the STL file.
  * @param {Buffer} buffer 
- * @returns 
+ * @returns Array with four numbers.
  */
+// TODO pass the reference to the list that will containt the vertices in order
+// avoid duplication when aggregating the list of vertices.
 function read50bitFacet(buffer) {
   // 48bytes = 4 groups of 12bytes
   var facet = [];

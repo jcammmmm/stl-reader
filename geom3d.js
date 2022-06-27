@@ -6,9 +6,7 @@ var vertShader = `
   varying   vec4  v_color;
 
   void main() {
-    vec4 v = u_mat*a_position;
-    gl_Position = v;
-    // gl_Position = vec4(v.xyz, 1.0 + v.z);
+    gl_Position = u_mat*a_position;
     v_color = a_color;
   }
 `
@@ -21,10 +19,10 @@ var fragShader = `
     gl_FragColor = v_color;
   }
 `
-var POINT_SZ = 3;
-var DEPTH_SZ = 800;
+var TUPLE_SZ = 3; // the number of entries per vertex
+var DEPTH_SZ = 800; // the size of depth axis
 
-function main() {
+async function main() {
   let gl = document.getElementById('c').getContext('webgl');
   let program = createProgram(gl, vertShader, fragShader);
 
@@ -40,42 +38,43 @@ function main() {
   setupSliderRt(2, 1);
   setupSliderFf(Math.PI);
 
-  let tr = [0, 0, 0];  // translation 
-  let rt = [0.6, 0.9, 0];  // rotation
+  let tr = [0.0, 0.0, 0.0];  // translation 
+  let rt = [0.6, 0.9, 0.0];  // rotation
+  let sc = [0.5, 0.5, 0.5]
   let ff = Math.PI/3;
   
   // let shape = build3dTriangle(40);
   // let shape = buildF(0, 0, 20, 8);
   // let shape = buildOrto3dRectangle(0, 0, 0, 20, 40);
-  let shape = buildOrto3dF(0, 0, 20, 8);
+  // let shape = buildOrto3dF(0, 0, 20, 8);
+  let shape = await openStlFile();
+  printAs3dCoordinates(shape.geom);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   let attrLocPosition = gl.getAttribLocation(program, 'a_position');
   set2dShape(gl, shape.geom);
-  gl.vertexAttribPointer(attrLocPosition, POINT_SZ, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(attrLocPosition, TUPLE_SZ, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrLocPosition);
   
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   let attrColorPosition = gl.getAttribLocation(program, 'a_color');
   set2dShape(gl, shape.color);
-  gl.vertexAttribPointer(attrColorPosition, POINT_SZ, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(attrColorPosition, TUPLE_SZ, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrColorPosition);
   
   function draw() {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-    let mat = new M4();
-    mat.scale(1, 1, 1);
-    mat.rotatex(rt[0]);
-    mat.rotatey(rt[1]);
-    mat.rotatez(rt[2]);
-    mat.translate(tr[0], tr[1], tr[2]);
     // mat.perspective(ff, gl.canvas.clientWidth, gl.canvas.clientHeight, -DEPTH_SZ/2, DEPTH_SZ/2);
-    mat.orthographic(gl.canvas.width, 0, gl.canvas.height, 0, DEPTH_SZ, 0);
+    // mat.orthographic(gl.canvas.width, 0, gl.canvas.height, 0, DEPTH_SZ, 0);
+    mat = new M4();
+    mat.scale(sc[0], sc[1], sc[2]);
+    mat.rotate(rt[0], rt[1], rt[2]);
+    mat.translate(tr[0], tr[1], tr[2]);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
     gl.uniform1f(unifLocFFactor, ff);
-    gl.drawArrays(gl.TRIANGLES, 0, shape.geom.length/POINT_SZ);
+    gl.drawArrays(gl.TRIANGLES, 0, shape.geom.length/TUPLE_SZ);
   }
 
   function setupSliderTr(axis, max) {
