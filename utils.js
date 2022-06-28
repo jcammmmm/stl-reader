@@ -93,7 +93,7 @@ function M4() {
     this.rotatez(rz);
   }
 
-  this.transform = function(rx, ry, rz) { // projection
+  this.orthographicSimple = function(rx, ry, rz) { // projection
     this.val = this.mult([
       2/rx,     0,     0,    0,
          0,  2/ry,     0,    0,
@@ -102,16 +102,16 @@ function M4() {
     ]);
   }
 
-  this.orthographic = function(right, left, top, bottom, near, far) {
+  this.orthographic = function(r, l, t, b, n, f) {
     this.val = this.mult([
-      2/(right - left), 0, 0, 0,
-      0, 2/(top - bottom), 0, 0,
-      0, 0, 2/(near - far), 0,
+      2/(r - l), 0,         0,         0,
+      0,         2/(t - b), 0,         0,
+      0,         0,         2/(n - f), 0,
       
-      (right + left)/-(right - left),
-      (top + bottom)/-(top - bottom),
-      (near + far)/-(near - far),
-      1
+      -(r + l)/(r - l),
+      -(t + b)/(t - b),
+      -(n + f)/(n - f),
+       1
     ]);
   }
 
@@ -147,6 +147,42 @@ function M4() {
       0,  0,  0,  1
     ]);
   }
+
+  this.transform = function(arrOfNums, tupleSize) {
+    A = this.val;
+    a00 = A[ 0]; a10 = A[ 1]; a20 = A[ 2]; a30 = A[ 3];
+    a01 = A[ 4]; a11 = A[ 5]; a21 = A[ 6]; a31 = A[ 7];
+    a02 = A[ 8]; a12 = A[ 9]; a22 = A[10]; a32 = A[11];
+    a03 = A[12]; a13 = A[13]; a23 = A[14]; a33 = A[15];
+
+    let vecMult = function(vec) {
+      if (vec.length == 3)
+        vec.push(1.0);
+      return [
+        a00*vec[0] + a01*vec[1] + a02*vec[2] + a03*vec[3],
+        a10*vec[0] + a11*vec[1] + a12*vec[2] + a13*vec[3],
+        a20*vec[0] + a21*vec[1] + a22*vec[2] + a23*vec[3],
+        // a03*vec[0] + a13*vec[1] + a23*vec[2] + a33*vec[3],
+      ]
+    }
+
+    if (arrOfNums.length%tupleSize == 0)
+      arrOfNums.push(NaN);
+
+    let arrOfTransfNums = [];
+    let vec = [];
+    for(let i = 0; i < tupleSize; i++) // init
+      vec.push(arrOfNums[i])
+    for(let i = tupleSize; i < arrOfNums.length; i++) {
+      if (i%tupleSize == 0) {
+        arrOfTransfNums = arrOfTransfNums.concat(vecMult(vec));
+        vec = [];
+      }
+      vec.push(arrOfNums[i]);
+    }
+    return arrOfTransfNums;
+  }
+  
 
   this.mult = function(B) {
     A = this.val;
@@ -268,9 +304,12 @@ function printMat(matArr) {
  * where a, b, c are elements of arrOfNums.
  * @param {Array} arrOfNums list of numbers.
  */
-function printAs3dCoordinates(arrOfNums) {
-  for(let i = 0; i < arrOfNums.length; i += 3)
-    console.log('(' + formatNumber(arrOfNums[i]) + ', ', formatNumber(arrOfNums[i + 1]) + ', ' + formatNumber(arrOfNums[i + 2]) + ')');
+function printAs3dCoordinates(arrOfNums, count=arrOfNums.length/3) {
+  console.log('%c---------------------------------------------------------------------', 'color: green');
+  for(let i = 0, j = 0; i < arrOfNums.length, j < count; i += 3, j++) {
+    let tupleRpr = '(' + formatNumber(arrOfNums[i]) + ', ' + formatNumber(arrOfNums[i + 1]) + ', ' + formatNumber(arrOfNums[i + 2]) + ')';
+    console.log('%c' + tupleRpr, 'color: ' + ((i/3)%6 < 3 ? 'yellow' : 'orange'));
+  }
 }
 
 /**
@@ -295,6 +334,33 @@ function formatNumber(num, sz=10) {
   for(let i = 0; i < sz - lt; i++)
     repr += '0';
   return repr;
+}
+
+/**
+ * Takes an array numbers that represents a set of 3d vertices and
+ * computes the minimum interval per axis that contain the vertex set.
+ * @param {List<Number>} arrOfNums 
+ */
+function getMinimumContainerBox(arr) {
+          // r       l       t       b       n       f
+  let box = [arr[0], arr[0], arr[1], arr[1], arr[2], arr[2]];
+  for(let i = 3; i < arr.length; i++) {
+    switch(i%3) {
+      case 0:
+        box[0] = Math.max(box[0], arr[i]);
+        box[1] = Math.min(box[1], arr[i]);
+        break;
+      case 1:
+        box[2] = Math.max(box[2], arr[i]);
+        box[3] = Math.min(box[3], arr[i]);
+        break;
+      default: // 2
+        box[4] = Math.max(box[4], arr[i]);
+        box[5] = Math.min(box[5], arr[i]);
+        break;
+    }
+  }
+  return box;
 }
 
 console.log('utils.js loaded.')

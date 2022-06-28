@@ -70,16 +70,16 @@ if (HTTP_FILE_TRANSFER_ENABLE) {
  * @returns an object that holds the 3D vertex point array (ignoring the normal vectors)
  * of triangles and an array of colors that colorize each triangle with a random color.
  */
-async function openStlFile() {
+async function openStlFile(shapeName) {
   let fileHandle;
   if (HTTP_FILE_TRANSFER_ENABLE) {
-    response = await fetch("http://127.0.0.1:5500/stl/cube.stl");
+    response = await fetch("http://127.0.0.1:5500/stl/" + shapeName + ".stl");
     let reader = response.body.getReader();
     let data = await reader.read();
     fileHandle = new FileHandle(data.value.buffer);
   } 
   else {
-    fileHandle = await fs.open("./stl/cube.stl");
+    fileHandle = await fs.open("./stl/" + shapeName + ".stl");
   }
   // read header
   const header = await readChunk(80, fileHandle, buffer => buffer.toString('ascii'));
