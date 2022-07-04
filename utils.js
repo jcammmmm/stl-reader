@@ -1,8 +1,8 @@
-function configureSlider(max, callback) {
+function configureSlider(max, curr, callback) {
   let div = document.createElement('div');
   let slider = document.createElement('input');
   slider.setAttribute('type', 'range');
-  slider.setAttribute('value', 0); // TODO: Fix. This does not put the slider to the middle.
+  slider.setAttribute('value', curr); // TODO: Fix. This does not put the slider to the middle.
   slider.setAttribute('min', 0);
   slider.setAttribute('max', max);
   slider.oninput = callback;
@@ -76,6 +76,21 @@ function M4() {
       0, 0, (near + far)*rangeInv, -1,
       0, 0, 2.0*near*far*rangeInv, 0,
     ]);
+  }
+
+  /**
+   * If w equals to 1.0, this matrix computes the quantity f*(z + 1.0) that
+   * will be assigned to component w in order to operate as homogeneus coordinate 
+   * when it is applied as divisor before displaying it in clipspace.
+   * @param {Float} f fudge factor
+   */
+  this.perspectiveSimple = function(f) {
+    this.val = this.mult([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, f,
+      0, 0, 0, f,
+    ])
   }
 
   this.translate = function(tx, ty, tz) {

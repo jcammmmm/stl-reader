@@ -1,4 +1,6 @@
-var HTTP_FILE_TRANSFER_ENABLE = true;
+const { format } = require("path");
+
+var HTTP_FILE_TRANSFER_ENABLE = false;
 
 if (HTTP_FILE_TRANSFER_ENABLE) {
   var FileHandle = class {
@@ -18,6 +20,8 @@ if (HTTP_FILE_TRANSFER_ENABLE) {
   var BufferImpl = class {
     constructor(bytes) {
       this.data = new ArrayBuffer(bytes);
+      if (this.data.byteLength != bytes)
+        throw Error('The buffer cannot be allocated correctly.');
     };
 
     toString(enconding) {
@@ -75,6 +79,7 @@ async function openStlFile(shapeName) {
   if (HTTP_FILE_TRANSFER_ENABLE) {
     response = await fetch("http://127.0.0.1:5500/stl/" + shapeName + ".stl");
     let reader = response.body.getReader();
+    console.log('file size: ' + (response.headers.get('content-length')) + 'bytes');
     let data = await reader.read();
     fileHandle = new FileHandle(data.value.buffer);
   } 
@@ -86,16 +91,26 @@ async function openStlFile(shapeName) {
   console.log(header);
   // number of facets
   const facets = await readChunk(4, fileHandle, buffer => buffer.readInt32LE(0));
-  console.log(facets);
+  console.log('triangle count: ' + facets);
   // triangular facet
   let triangles = [];
   let colors = [];
+  let missingTriangles = 0;
+  console.log('reading file ...')
   for(var i = 0; i < facets; i++) {
-    let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
-    triangles = triangles.concat(facet[1], facet[2], facet[3]);
-    let color = [Math.random(), Math.random(), Math.random()]
-    colors    = colors.concat(color, color, color);
+    if (i%500 == 499)
+      console.log('%c' + i*100/facets + '% completed. ', 'color: green');
+    try {
+      let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
+      triangles = triangles.concat(facet[1], facet[2], facet[3]);
+      let color = [Math.random(), Math.random(), Math.random()]
+      colors    = colors.concat(color, color, color);
+    } catch(err) {
+      missingTriangles++;
+    }
   }
+  console.log('100% completed.')
+  console.log('%cmissed triangles: ' + missingTriangles, 'color: red');
   return {
     geom: triangles,
     color: colors
@@ -151,3 +166,5 @@ function printBufferAsInteger(buffer) {
   console.log(n);
   return n;
 }
+
+openStlFile('horma');

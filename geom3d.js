@@ -77,8 +77,9 @@ async function main() {
     mat.rotate(rt[0], rt[1], rt[2]);
     mat.scale(sc[0], sc[1], sc[2]);
     mat.translate(tr[0], tr[1], tr[2]);
+    // mat.perspectiveSimple(0.7);
     mat.orthographic(ol[0], ol[1], ol[2], ol[3], ol[4], ol[5]);
-    printAs3dCoordinates(mat.transform(shape.geom, TUPLE_SZ), 3);
+    // printAs3dCoordinates(mat.transform(shape.geom, TUPLE_SZ), 3);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
     gl.uniform1f(unifLocFFactor, ff);
     gl.drawArrays(gl.TRIANGLES, 0, shape.geom.length/TUPLE_SZ);
@@ -86,7 +87,8 @@ async function main() {
 
   function setupSliderTr(axis, max) {
     let label = document.createElement('label');
-    let div = configureSlider(max, function(e) {
+    label.innerHTML = tr[axis];
+    let div = configureSlider(max, tr[axis], function(e) {
       tr[axis] = parseInt(e.target.value);
       label.innerHTML = tr[axis];
       draw();
@@ -96,8 +98,9 @@ async function main() {
 
   function setupSliderRt(axis, turns) {
     let label = document.createElement('label');
+    label.innerHTML = rt[axis];
     let pres = 10;
-    let div = configureSlider(2*Math.PI*turns*pres, function(e) {
+    let div = configureSlider(2*Math.PI*turns*pres, rt[axis]*pres, function(e) {
       rt[axis] = parseInt(e.target.value)/pres;
       label.innerHTML = rt[axis];
       draw();
@@ -107,8 +110,9 @@ async function main() {
 
   function setupSliderSc(max) {
     let label = document.createElement('label');
+    label.innerHTML = sc[0];
     let pres = 500;
-    let div = configureSlider(pres*max, function(e) {
+    let div = configureSlider(max*pres, sc[0]*pres, function(e) {
       let factor = parseInt(e.target.value)/pres;
       sc = [factor, factor, factor]
       label.innerHTML = factor;
