@@ -1,70 +1,67 @@
-const { format } = require("path");
+var READING_LOG_BLOCK_SZ      = 2;
 
-var HTTP_FILE_TRANSFER_ENABLE = false;
+class STLReader {
+  #buffer = null;
+  #pos = 0;
 
-if (HTTP_FILE_TRANSFER_ENABLE) {
-  var FileHandle = class {
-    constructor(data) {
-      this.data = data;
-      this.position = 0;
-    }
+  constructor(buffer) {
+    this.#buffer = buffer;
+    this.#pos = 0;
+  }
 
-    read(buffer, length) {
-      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/slice
-      buffer.data = this.data.slice(this.position, this.position + length);
-      this.position += length;
-      return buffer;
+  static async build(shapename) {
+    let response = await fetch("http://127.0.0.1:5500/stl/" + shapename + ".stl");
+    let reader = response.body.getReader();
+    console.log('file size: ' + (response.headers.get('content-length')) + ' bytes');
+    // https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/read#return_value
+    let data = await reader.read();
+    return new STLReader(data.value.buffer);
+  }
+
+  getHeader(enconding='binary') {
+    if (enconding == 'binary') {
+      // first 80 bytes of binary STL are heading comments
+      let str = new Uint8Array(this.#buffer.slice(0, 80));
+      for(let i in str) {
+        if (str[i] == 0)
+          str[i] = 32;
+      }
+      let txt = (new TextDecoder("UTF-8")).decode(str);
+      this.#pos += 80;
+      return txt;
+    } else {
+      throw Error(enconding + ' is not a valid encoding.')
     }
   }
 
-  var BufferImpl = class {
-    constructor(bytes) {
-      this.data = new ArrayBuffer(bytes);
-      if (this.data.byteLength != bytes)
-        throw Error('The buffer cannot be allocated correctly.');
-    };
+  getFacetCount() {
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/slice
+    let int32LE = (new DataView(this.#buffer.slice(this.#pos, this.#pos + 4))).getInt32(0, true);
+    this.#pos += 4;
+    return int32LE;
+  }
 
-    toString(enconding) {
-      if (enconding == 'ascii') {
-        let str = new Uint8Array(this.data);
-        for(let i in str) {
-          if (str[i] == 0)
-            str[i] = 32;
-        }
-        return (new TextDecoder("UTF-8")).decode(str);
-      } else {
-        throw Error(enconding + ' is not a valid encoding.')
+  /**
+   * The procesing is performed for each float and not by array chunks because
+   * the procesing by chunks reads each float as big endian, and the STL file
+   * provides this data as little endian floats.
+   * @returns 3x3D points that represents a shape's triangle
+   */
+  next50bitFacet() {
+    // 48bytes = 4 groups of 12bytes = 3x3D points + 1 3D normal
+    let facet = [];
+    this.#pos += 12;             // 1x3D facet's normal vector
+    for(var i = 1; i < 4; i++) { // 3x3D points
+      // 12bytes = 3 little endian 4byte floats = 1 3D point
+      for(var j = 0; j < 3; j++) {
+        facet.push(new DataView(this.#buffer.slice(this.#pos, this.#pos + 4)).getFloat32(0, true));
+        this.#pos += 4;
       }
     }
-
-    readInt32LE(offset) {
-      return (new DataView(this.data)).getInt32(offset, true);
-    }
-
-    readFloatLE(offset) {
-      return (new DataView(this.data)).getFloat32(offset, true);
-    }
-  }
-
-  var readChunk = function(bytes, fileHandle, parseCallback) {
-    let buffer = new BufferImpl(bytes);
-    return parseCallback(fileHandle.read(buffer, bytes));
-  }
-} else {
-  var fs = require("fs/promises");
-  /**
-   * Allocates a buffer, reads a chunk of bytes size, then parses
-   * this chunk with the provided parseCallback and return the 
-   * parsing results.
-   * @param {int} bytes 
-   * @param {FileHandle} fileHandle 
-   * @param {Function} parseCallback
-   * @returns a value after chunk casting
-   */
-  var readChunk = function (bytes, fileHandle, parseCallback) {
-    let buffer = Buffer.alloc(bytes);
-    let chunk = fileHandle.read(buffer, 0, bytes, null);
-    return chunk.then(value => parseCallback(value.buffer))
+    // 2bytes  = attribute count
+    this.#pos += 2;
+    // pass
+    return facet;
   }
 }
 
@@ -74,97 +71,39 @@ if (HTTP_FILE_TRANSFER_ENABLE) {
  * @returns an object that holds the 3D vertex point array (ignoring the normal vectors)
  * of triangles and an array of colors that colorize each triangle with a random color.
  */
-async function openStlFile(shapeName) {
-  let fileHandle;
-  if (HTTP_FILE_TRANSFER_ENABLE) {
-    response = await fetch("http://127.0.0.1:5500/stl/" + shapeName + ".stl");
-    let reader = response.body.getReader();
-    console.log('file size: ' + (response.headers.get('content-length')) + 'bytes');
-    let data = await reader.read();
-    fileHandle = new FileHandle(data.value.buffer);
-  } 
-  else {
-    fileHandle = await fs.open("./stl/" + shapeName + ".stl");
-  }
+async function openStlFile(shapename) {
+  let reader = await STLReader.build(shapename);
+
   // read header
-  const header = await readChunk(80, fileHandle, buffer => buffer.toString('ascii'));
+  const header = reader.getHeader();
   console.log(header);
+  if (header.slice(0, 5) == 'solid')
+    throw Error('Parsing ascii STL files is not supported. Please format this STL to a binary one.');
+
   // number of facets
-  const facets = await readChunk(4, fileHandle, buffer => buffer.readInt32LE(0));
+  const facets = reader.getFacetCount();
   console.log('triangle count: ' + facets);
+
   // triangular facet
   let triangles = [];
   let colors = [];
   let missingTriangles = 0;
-  console.log('reading file ...')
+  console.log('%creading file ...', 'color: green')
+  let blckCount = Math.round(facets/READING_LOG_BLOCK_SZ);
   for(var i = 0; i < facets; i++) {
-    if (i%500 == 499)
-      console.log('%c' + i*100/facets + '% completed. ', 'color: green');
+    if (i%blckCount == blckCount - 1)
+      console.log('%c' + Math.round(i*100/facets) + '% completed. ', 'color: green');
     try {
-      let facet = await readChunk(50, fileHandle, buffer => read50bitFacet(buffer));
-      triangles = triangles.concat(facet[1], facet[2], facet[3]);
+      triangles = triangles.concat(reader.next50bitFacet());
       let color = [Math.random(), Math.random(), Math.random()]
       colors    = colors.concat(color, color, color);
     } catch(err) {
       missingTriangles++;
     }
   }
-  console.log('100% completed.')
-  console.log('%cmissed triangles: ' + missingTriangles, 'color: red');
+  missingTriangles == 0 ? NaN : console.log('%cmissed triangles: ' + missingTriangles, 'color: red');
   return {
     geom: triangles,
     color: colors
   };
 }
-
-/**
- * Reads the stl file and captures four numbers that represents one triangle 
- * with its normal vector within the STL file.
- * @param {Buffer} buffer 
- * @returns Array with four numbers.
- */
-// TODO pass the reference to the list that will containt the vertices in order
-// avoid duplication when aggregating the list of vertices.
-function read50bitFacet(buffer) {
-  // 48bytes = 4 groups of 12bytes
-  var facet = [];
-  for(var i = 0; i < 4; i++) {
-    var coord = []
-    // 12bytes = 3 little endian 4byte floats
-    for(var j = 0; j < 3; j++)
-      coord.push(buffer.readFloatLE(12*i + 4*j));
-    facet.push(coord);
-  }
-  // 2bytes  = attribute count
-  // pass
-  return facet;
-}
-
-/**
- * @deprecated in favor of https://nodejs.org/api/buffer.html#buftostringencoding-start-end
- * @param {Buffer} buffer 
- */
-function printBufferAsString(buffer) {
-  str = '';
-  for(const b of buffer.entries())
-    str += String.fromCharCode(b[1]);
-  console.log(str);
-}
-
-/**
- * @deprecated in favor of https://nodejs.org/api/buffer.html#bufreadint32leoffset
- * @param {Buffer} buffer 
- * @returns 
- */
-function printBufferAsInteger(buffer) {
-  // numbers are little endian
-  // https://www.loc.gov/preservation/digital/formats/fdd/fdd000505.shtml
-  var int = [];
-  for(const b of buffer.entries())
-    int.push(b[1])
-  var n = Number(int.reverse().join(''))
-  console.log(n);
-  return n;
-}
-
-openStlFile('horma');

@@ -36,7 +36,7 @@ async function main() {
   // let shape = buildF(0, 0, 20, 8);
   // let shape = buildOrto3dRectangle(0, 0, 0, 20, 40);
   // let shape = buildOrto3dF(0, 0, 30, 6);
-  let shape = await openStlFile('cube');
+  let shape = await openStlFile('ovni');
   printAs3dCoordinates(shape.geom, 3);
 
   let ol = getMinimumContainerBox(shape.geom); // shape limits
