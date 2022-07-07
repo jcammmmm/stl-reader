@@ -320,10 +320,9 @@ function printMat(matArr) {
  * @param {Array} arrOfNums list of numbers.
  */
 function printAs3dCoordinates(arrOfNums, count=arrOfNums.length/3) {
-  console.log('%c---------------------------------------------------------------------', 'color: green');
   for(let i = 0, j = 0; i < arrOfNums.length, j < count; i += 3, j++) {
     let tupleRpr = '(' + formatNumber(arrOfNums[i]) + ', ' + formatNumber(arrOfNums[i + 1]) + ', ' + formatNumber(arrOfNums[i + 2]) + ')';
-    console.log('%c' + tupleRpr, 'color: ' + ((i/3)%6 < 3 ? 'yellow' : 'orange'));
+    console.log('%c' + tupleRpr, 'color: ' + ((i/3)%6 < 3 ? 'LightCoral' : 'Salmon'));
   }
 }
 
