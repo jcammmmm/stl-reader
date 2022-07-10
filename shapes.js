@@ -157,3 +157,5 @@ function buildOrto3dF(a, b, s, f) {
     color: c
   }
 }
+
+console.log('shapes.js loaded.');

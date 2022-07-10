@@ -1,6 +1,87 @@
 var READING_LOG_BLOCK_SZ      = 2;
 var FACET_BYTE_SZ             = 50;
 
+class STLUnpacker {
+  constructor(controller, streamLenght) {
+    this.ctlr = controller;
+    this.streamLenght = streamLenght;
+    this.currLenght = 0;
+    this.pos = 84;
+    this.halfchunk = new Uint8Array(0);
+  }
+
+  /**
+   * Each chunk passed her has a random lenght, since this unpacker is 
+   * piped previusly by a ReadableStream that streams data from  a network 
+   * resource.
+   * [1] if slice is out of bounds, takes 
+   * @param {ArrayBuffer} chunk 
+   */
+  enqueueFacets(chunk) {
+    this.enqueuePartialFacet(chunk);
+    let i = this.pos
+    for(; i + 50 < chunk.byteLength; i += 50)
+      this.ctlr.enqueue(chunk.slice(i, i + 50));
+    this.halfchunk = chunk.slice(i, chunk.byteLength);
+    this.pos = 0;
+    if ((this.currLenght += chunk.byteLength) == this.streamLenght) {
+      this.enqueuePartialFacet(new Uint8Array(0));
+      controller.close();
+    }
+  }
+
+  enqueuePartialFacet(chunk) {
+    let facet = new Uint8Array(50);
+    let half1 = this.halfchunk;
+    let half2 = chunk.slice(this.pos, this.pos + facet.byteLength - half1.byteLength);
+    if (half1.byteLength + half2.byteLength == facet.byteLength) {
+      for(let i = 0; i < half1.byteLength; i++)
+        facet[i] = half1[i];
+      for(let i = half1.byteLength, j = 0; i < half2.byteLength; i++, j++)
+        facet[i] = half2[j];
+    }
+    else
+      throw Error('STL model file is corrupted. One facet has missing data.');
+
+    this.ctlr.enqueue(facet);
+    this.pos += half2.byteLength;
+  }
+
+  getHeader(enconding='binary', headerbuff) {
+    if (enconding == 'binary') {
+      for(let i in headerbuff) {
+        if (headerbuff[i] == 0)
+          headerbuff[i] = 32;
+      }
+      this.pos += 80;
+      return txt = (new TextDecoder("UTF-8")).decode(headerbuff);
+    } else 
+      throw Error(enconding + ' is not a valid encoding.')
+  }
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/TransformStream
+class STLTransformStream {
+  constructor(streamLenght) {
+    let unpkr;
+    // We need to carry the controller to the unpacker context
+    // in order to fill up the stream when the writer stream places
+    // a new chunk.
+    this.readable = new ReadableStream({
+      start(controller) {
+        unpkr = new STLUnpacker(controller, parseInt(streamLenght));
+      }
+    })
+
+    // When this transform gets instanced, the write stream is called first.
+    this.writable = new WritableStream({
+      write(uint8chunk) {
+        unpkr.enqueueFacets(uint8chunk);
+      }
+    })
+  }
+}
+
 class STLReader {
   #BUFFER_BYTE_SZ = 10*FACET_BYTE_SZ;
   #buffers = [];
@@ -155,3 +236,5 @@ async function openStlFile(shapename) {
     color: colors
   };
 }
+
+console.log('parser.js loaded.');
