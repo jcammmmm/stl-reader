@@ -7,15 +7,15 @@
     length: response.headers.get('content-length')
   }))
   .then(model => model.stream.pipeThrough(new STLTransformStream(model.length)))
-  .then(async function(data) {
-    let reader = data.getReader();
+  .then(facets => facets.pipeThrough(new TransformStream(new FacetTransformStream())))
+  .then(async function(triangles) {
+    let reader = triangles.getReader();
+    let val;
     let i = 0;
-    while(true) {
-      let v = await reader.read();
-      i++;
-      console.log(i);
-    }
-
-  });
+    do {
+      val = await reader.read();
+      console.log(val.value);
+    } while(!val.done);
+  })
 })();
 console.log('driver.js loaded.');

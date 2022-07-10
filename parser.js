@@ -42,7 +42,7 @@ class STLUnpacker {
     }
     else
       throw Error('STL model file is corrupted. One facet has missing data.');
-
+      
     this.ctlr.enqueue(facet);
     this.pos += half2.byteLength;
   }
@@ -71,14 +71,43 @@ class STLTransformStream {
       start(controller) {
         unpkr = new STLUnpacker(controller, parseInt(streamLenght));
       }
-    })
+    });
 
-    // When this transform gets instanced, the write stream is called first.
+    /**
+     * When this transform gets instanced, the write stream is called first.
+     * (write) ->> [WritableStream] -->> (enqueue) ->> [ReadableStream]
+     */
     this.writable = new WritableStream({
       write(uint8chunk) {
         unpkr.enqueueFacets(uint8chunk);
       }
-    })
+    });
+  }
+}
+
+class FacetTransformStream {
+
+  constructor() {
+    this.transform = function (chunk, controller) {
+      controller.enqueue(this.parseFacet(chunk));
+    }
+  }
+
+
+  parseFacet(facetData) {
+    // 48bytes = 4 groups of 12bytes = 3x3D points + 1 3D normal
+    let dots = [];
+    let pos = 12;  // 1x3D point (normal vector)
+    for(var i = 1; i < 4; i++)      // 3x3D points (triangle vectors)
+      // 12bytes = 3 little endian 4byte floats = 1 3D point
+      for(var j = 0; j < 3; j++) {
+        dots.push(new DataView(facetData.buffer.slice(pos, pos + 4)).getFloat32(0, true));
+        pos += 4;
+      }
+    // 2bytes  = attribute count
+    pos += 2;
+    // pass
+    return dots;
   }
 }
 
