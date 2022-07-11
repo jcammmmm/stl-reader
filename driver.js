@@ -6,16 +6,15 @@
     stream: response.body,
     length: response.headers.get('content-length')
   }))
-  .then(model => model.stream.pipeThrough(new STLTransformStream(model.length)))
-  .then(facets => facets.pipeThrough(new TransformStream(new FacetTransformStream())))
-  .then(async function(triangles) {
-    let reader = triangles.getReader();
-    let val;
-    let i = 0;
-    do {
-      val = await reader.read();
-      console.log(val.value);
-    } while(!val.done);
-  })
+  .then(model => ({
+    stream: model.stream.pipeThrough(new STLTransformStream(model.length)),
+    fcount: (model.length - 84)/50
+  }))
+  .then(facets => ({
+    stream: facets.stream.pipeThrough(new TransformStream(new FacetTransformStream(facets.fcount))),
+    fcount: facets.fcount
+  }))
+  .then(triangles => triangles.stream.pipeTo(new WritableStream(new TriangleDataSink(triangles.fcount))));
 })();
+
 console.log('driver.js loaded.');
