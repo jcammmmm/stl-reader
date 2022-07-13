@@ -10,7 +10,7 @@ class STLUnpacker {
     this.halfchunk = new Uint8Array(0);
   }
 
-  enqueueFacets3(chunk) {
+  enqueueFacets(chunk) {
     let interfacet = new Uint8Array(50);
     let otherhalf = chunk.slice(this.pos, this.pos + interfacet.length - this.halfchunk.length);
     for(let i = 0; i < this.halfchunk.length; i++)
@@ -26,6 +26,7 @@ class STLUnpacker {
     this.halfchunk = chunk.slice(chunk.length - rem, chunk.length);
   }
 
+  // TODO: discover the bug
   /**
    * Each chunk passed her has a random lenght, since this unpacker is 
    * piped previusly by a ReadableStream that streams data from  a network 
@@ -33,7 +34,7 @@ class STLUnpacker {
    * [1] if slice is out of bounds, takes 
    * @param {ArrayBuffer} chunk 
    */
-  enqueueFacets(chunk) {
+  enqueueFacets2(chunk) {
     // concat the interchunk splitted facet
     let facet = new Uint8Array(50);
     let half1 = this.halfchunk;
@@ -127,21 +128,19 @@ class TriangleDataSink {
   constructor(facetCount) {
     this.facetCount = facetCount;
     this.currCount = 0;
-    this.shapeData = new Array(0);
-    this.colorData = new Array(0);
+
+    this.shapeData = new Array(facetCount*9);
+    console.log('%c'+ this.shapeData.length + ' bytes alloc.', 'color: cyan');
+    this.colorData = new Array(facetCount*9);
+    console.log('%c'+ this.shapeData.length + ' bytes alloc.', 'color: cyan');
   }
 
   write(triangleData) {
-    this.shapeData = this.shapeData.concat(triangleData);
-    for(let i = 0; i < triangleData.length/9; i++) {
-      let r = Math.random(), g = Math.random(), b = Math.random();
-      this.colorData = this.colorData.concat([
-        r, g, b,
-        r, g, b,
-        r, g, b,
-      ])
+    for(let i = 0; i < triangleData.length; i++) {
+      this.shapeData[this.currCount++] = triangleData[i];
+      this.colorData[this.currCount] = (Math.sin(triangleData[i]) + 1)/2;
     }
-    if((this.currCount += triangleData.length/9) == this.facetCount)
+    if(this.currCount/9 == this.facetCount)
       this.close();
   }
 
