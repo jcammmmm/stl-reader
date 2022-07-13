@@ -15,6 +15,23 @@
     fcount: facets.fcount
   }))
   .then(triangles => triangles.stream.pipeTo(new WritableStream(new TriangleDataSink(triangles.fcount))));
+  // .then(async function(o) {
+  //   let src = o.stream.getReader();
+  //   console.log('%c' + o.fcount, 'color: cyan');
+  //   let s = 0;
+  //   while(true) {
+  //     let ch = await src.read();
+  //     s += ch.value.length/9;
+  //     console.log(s)
+  //     // console.log(s += ch.value.length);
+  //     if (ch.done) {
+  //       console.log('fin');
+  //       break;
+  //     }
+  //   }
+  // })
+
+  
 })();
 
 console.log('driver.js loaded.');

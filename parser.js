@@ -10,6 +10,22 @@ class STLUnpacker {
     this.halfchunk = new Uint8Array(0);
   }
 
+  enqueueFacets3(chunk) {
+    let interfacet = new Uint8Array(50);
+    let otherhalf = chunk.slice(this.pos, this.pos + interfacet.length - this.halfchunk.length);
+    for(let i = 0; i < this.halfchunk.length; i++)
+      interfacet[i] = this.halfchunk[i];
+    for(let i = this.halfchunk.length, j = 0; i < interfacet.length; i++, j++)
+      interfacet[i] = otherhalf[j];
+    this.ctlr.enqueue(interfacet);
+    this.pos += otherhalf.length;
+
+    let rem = (chunk.byteLength - this.pos)%50;
+    this.ctlr.enqueue(chunk.slice(this.pos, chunk.byteLength - rem));
+    this.pos = 0;
+    this.halfchunk = chunk.slice(chunk.length - rem, chunk.length);
+  }
+
   /**
    * Each chunk passed her has a random lenght, since this unpacker is 
    * piped previusly by a ReadableStream that streams data from  a network 
@@ -18,34 +34,25 @@ class STLUnpacker {
    * @param {ArrayBuffer} chunk 
    */
   enqueueFacets(chunk) {
-    this.enqueuePartialFacet(chunk);
-    let i = this.pos
-    for(; i + 50 < chunk.byteLength; i += 50)
-      this.ctlr.enqueue(chunk.slice(i, i + 50));
-    this.halfchunk = chunk.slice(i, chunk.byteLength);
-    this.pos = 0;
-    
-    if ((this.currLenght += chunk.byteLength) == this.streamLenght) {
-      this.enqueuePartialFacet(new Uint8Array(0));
-      controller.close();
-    }
-  }
-
-  enqueuePartialFacet(chunk) {
+    // concat the interchunk splitted facet
     let facet = new Uint8Array(50);
     let half1 = this.halfchunk;
-    let half2 = chunk.slice(this.pos, this.pos + facet.byteLength - half1.byteLength);
-    if (half1.byteLength + half2.byteLength == facet.byteLength) {
-      for(let i = 0; i < half1.byteLength; i++)
-        facet[i] = half1[i];
-      for(let i = half1.byteLength, j = 0; i < half2.byteLength; i++, j++)
-        facet[i] = half2[j];
-    }
-    else
-      throw Error('STL model file is corrupted. One facet has missing data.');
-      
+    let half2 = chunk.slice(this.pos, this.pos + facet.length - half1.length);
+    for(let i = 0; i < half1.length; i++)
+      facet[i] = half1[i];
+    for(let i = half1.length, j = 0; i < half2.length; i++, j++)
+      facet[i] = half2[j];
+    this.pos += half2.length;
     this.ctlr.enqueue(facet);
-    this.pos += half2.byteLength;
+    // enqueue remainding facets
+    let rmdr = (chunk.length - this.pos)%50;
+    this.ctlr.enqueue(chunk.slice(this.pos, chunk.length - rmdr));
+    this.halfchunk = chunk.slice(chunk.length - rmdr, chunk.length);
+    this.pos = 0;
+
+    console.log(this.currLenght*100/this.streamLenght);
+    if ((this.currLenght += chunk.byteLength) == this.streamLenght)
+      controller.close();
   }
 
   getHeader(enconding='binary', headerbuff) {
@@ -89,7 +96,7 @@ class STLTransformStream {
 class FacetTransformStream {
   constructor(facetCount) {
     this.facetCount = facetCount;
-    this.precision = Math.round(facetCount/10);
+    this.precision = Math.round(facetCount/100);
     this.currCount = 0;
   }
 
@@ -98,20 +105,20 @@ class FacetTransformStream {
   }
 
   parseFacet(facetData) {
-    // 48bytes = 4 groups of 12bytes = 3x3D points + 1 3D normal
     let dots = [];
-    let pos = 12;  // 1x3D point (normal vector)
-    for(var i = 1; i < 4; i++)      // 3x3D points (triangle vectors)
-      // 12bytes = 3 little endian 4byte floats = 1 3D point
-      for(var j = 0; j < 3; j++) {
-        dots.push(new DataView(facetData.buffer.slice(pos, pos + 4)).getFloat32(0, true));
-        pos += 4;
-      }
-    // 2bytes  = attribute count
-    pos += 2;
-    // pass
-    if (++this.currCount%this.precision == this.precision - 1)
-      console.log(++this.currCount/this.facetCount);
+    for(let k = 0; k < facetData.length/50; k++) {
+      // 48bytes = 4 groups of 12bytes = 3x3D points + 1 3D normal
+      let pos = 50*k + 12;  // 1x3D point (normal vector)
+      for(var i = 1; i < 4; i++)      // 3x3D points (triangle vectors)
+        // 12bytes = 3 little endian 4byte floats = 1 3D point
+        for(var j = 0; j < 3; j++) {
+          dots.push(new DataView(facetData.buffer.slice(pos, pos + 4)).getFloat32(0, true));
+          pos += 4;
+        }
+      // 2bytes  = attribute count
+      pos += 2;
+      // pass
+    }
     return dots;
   }
 }
@@ -126,13 +133,15 @@ class TriangleDataSink {
 
   write(triangleData) {
     this.shapeData = this.shapeData.concat(triangleData);
-    let r = Math.random(), g = Math.random(), b = Math.random();
-    this.colorData = this.colorData.concat([
-      r, g, b,
-      r, g, b,
-      r, g, b,
-    ])
-    if(++this.currCount == this.facetCount)
+    for(let i = 0; i < triangleData.length/9; i++) {
+      let r = Math.random(), g = Math.random(), b = Math.random();
+      this.colorData = this.colorData.concat([
+        r, g, b,
+        r, g, b,
+        r, g, b,
+      ])
+    }
+    if((this.currCount += triangleData.length/9) == this.facetCount)
       this.close();
   }
 
