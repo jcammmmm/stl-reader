@@ -1,14 +1,71 @@
-function configureSlider(max, curr, callback) {
+function configureSlider(domid, max, curr, callback) {
   let div = document.createElement('div');
   let slider = document.createElement('input');
+  slider.setAttribute('id', domid);
   slider.setAttribute('type', 'range');
-  slider.setAttribute('value', curr); // TODO: Fix. This does not put the slider to the middle.
   slider.setAttribute('min', 0);
   slider.setAttribute('max', max);
+  slider.setAttribute('value', curr); // setting this attr goes after min and max
   slider.oninput = callback;
+  slider.addEventListener('keydown', keyboardController);
   div.appendChild(slider);
   document.body.append(div);
   return div;
+}
+
+/**
+ *  keydown { target: canvas#c, key: "1", charCode: 0, keyCode: 49 }
+    keydown { target: canvas#c, key: "2", charCode: 0, keyCode: 50 }
+    keydown { target: canvas#c, key: "3", charCode: 0, keyCode: 51 }
+    keydown { target: canvas#c, key: "q", charCode: 0, keyCode: 81 }
+    keydown { target: canvas#c, key: "w", charCode: 0, keyCode: 87 }
+    keydown { target: canvas#c, key: "e", charCode: 0, keyCode: 69 }
+    keydown { target: canvas#c, key: "a", charCode: 0, keyCode: 65 }
+    keydown { target: canvas#c, key: "s", charCode: 0, keyCode: 83 }
+    keydown { target: canvas#c, key: "d", charCode: 0, keyCode: 68 }
+    keydown { target: canvas#c, key: "j", charCode: 0, keyCode: 74 }
+    keydown { target: canvas#c, key: "k", charCode: 0, keyCode: 75 }
+
+ * @param {*} event 
+ */
+function keyboardController(event) {
+  switch (event.keyCode) {
+    case 49: // '1' => x axis
+      document.getElementById('ctrlAxis0').focus();
+      break;
+    case 50: // '2' => y axis
+      document.getElementById('ctrlAxis1').focus();
+      break;
+    case 51: // '3' => z axis
+      document.getElementById('ctrlAxis2').focus();
+      break;
+    case 81: // 'q' => x rotation
+      document.getElementById('ctrlRot0').focus();
+      break;
+    case 87: // 'w' => y rotation
+      document.getElementById('ctrlRot1').focus();
+      break;
+    case 69: // 'e' => z rotation
+      document.getElementById('ctrlRot2').focus();
+      break;
+    case 65: // 'a' => scaling
+      document.getElementById('ctrlSca').focus();
+      break;
+    case 83: // 's' => perspective
+      document.getElementById('ctrlPersp').focus();
+      break;
+    case 68: // 'd' => ??
+      document.getElementById('').focus();
+      break;
+    case 74: // '1' => x axis
+      document.getElementById('ctrlAxis0').focus();
+      break;
+    case 75: // '1' => x axis
+      document.getElementById('ctrlAxis0').focus();
+      break;
+    default:
+      break;
+  }
 }
 
 function createShader(gl, shaderSource, type) {

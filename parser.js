@@ -34,7 +34,7 @@ class STLUnpacker {
    * [1] if slice is out of bounds, takes 
    * @param {ArrayBuffer} chunk 
    */
-  enqueueFacets2(chunk) {
+  enqueueFacets5(chunk) {
     // concat the interchunk splitted facet
     let facet = new Uint8Array(50);
     let half1 = this.halfchunk;

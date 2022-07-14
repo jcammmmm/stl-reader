@@ -24,7 +24,12 @@ var TUPLE_SZ = 3; // the number of entries per vertex
 var DEPTH_SZ = 400; // the size of depth axis
 
 var render = async function render(shape) {
-  let gl = document.getElementById('c').getContext('webgl');
+  let canvas = document.getElementById('c');
+  canvas.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
+  canvas.addEventListener('keydown', keyboardController);
+  canvas.focus();
+  
+  let gl = canvas.getContext('webgl');
   let program = createProgram(gl, vertShader, fragShader);
 
   let unifLocMatrix = gl.getUniformLocation(program, 'u_mat');
@@ -36,7 +41,6 @@ var render = async function render(shape) {
   // let shape = buildF(0, 0, 20, 8);
   // let shape = buildOrto3dRectangle(0, 0, 0, 20, 40);
   // let shape = buildOrto3dF(0, 0, 30, 6);
-  // let shape = await openStlFile('ovni');
   printAs3dCoordinates(shape.geom, 3);
 
   let ol = getMinimumContainerBox(shape.geom); // shape limits
@@ -77,8 +81,8 @@ var render = async function render(shape) {
     mat.rotate(rt[0], rt[1], rt[2]);
     mat.scale(sc[0], sc[1], sc[2]);
     mat.translate(tr[0], tr[1], tr[2]);
-    // mat.perspectiveSimple(0.7);
     mat.orthographic(ol[0], ol[1], ol[2], ol[3], ol[4], ol[5]);
+    mat.perspectiveSimple(1);
     // printAs3dCoordinates(mat.transform(shape.geom, TUPLE_SZ), 3);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
     gl.uniform1f(unifLocFFactor, ff);
@@ -88,7 +92,7 @@ var render = async function render(shape) {
   function setupSliderTr(axis, max) {
     let label = document.createElement('label');
     label.innerHTML = tr[axis];
-    let div = configureSlider(max, tr[axis], function(e) {
+    let div = configureSlider('ctrlAxis' + axis, max, tr[axis], function(e) {
       tr[axis] = parseInt(e.target.value);
       label.innerHTML = tr[axis];
       draw();
@@ -100,7 +104,7 @@ var render = async function render(shape) {
     let label = document.createElement('label');
     label.innerHTML = rt[axis];
     let pres = 10;
-    let div = configureSlider(2*Math.PI*turns*pres, rt[axis]*pres, function(e) {
+    let div = configureSlider('ctrlRot' + axis, 2*Math.PI*turns*pres, rt[axis]*pres, function(e) {
       rt[axis] = parseInt(e.target.value)/pres;
       label.innerHTML = rt[axis];
       draw();
@@ -111,8 +115,8 @@ var render = async function render(shape) {
   function setupSliderSc(max) {
     let label = document.createElement('label');
     label.innerHTML = sc[0];
-    let pres = 500;
-    let div = configureSlider(max*pres, sc[0]*pres, function(e) {
+    let pres = 10;
+    let div = configureSlider('ctrlSca', max*pres, sc[0]*pres, function(e) {
       let factor = parseInt(e.target.value)/pres;
       sc = [factor, factor, factor]
       label.innerHTML = factor;
@@ -123,8 +127,8 @@ var render = async function render(shape) {
 
   function setupSliderFf(max) {
     let label = document.createElement('label');
-    let pres = 1000;
-    let div = configureSlider(pres*max, function(e) {
+    let pres = 10;
+    let div = configureSlider('ctrlPersp', pres*max, ff, function(e) {
       ff = parseInt(e.target.value)/pres;
       label.innerHTML = ff;
       draw();
