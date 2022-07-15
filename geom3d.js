@@ -28,7 +28,7 @@ var render = async function render(shape) {
   canvas.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
   canvas.addEventListener('keydown', keyboardController);
   canvas.focus();
-  
+
   let gl = canvas.getContext('webgl');
   let program = createProgram(gl, vertShader, fragShader);
 
@@ -37,14 +37,11 @@ var render = async function render(shape) {
 
   gl.useProgram(program);
 
-  // let shape = build3dTriangle(40);
-  // let shape = buildF(0, 0, 20, 8);
-  // let shape = buildOrto3dRectangle(0, 0, 0, 20, 40);
-  // let shape = buildOrto3dF(0, 0, 30, 6);
-  printAs3dCoordinates(shape.geom, 3);
+  // shape = buildOrto3dF(0, 0, 30, 6);
+  // printAs3dCoordinates(shape.geom, 13);
 
-  let ol = getMinimumContainerBox(shape.geom); // shape limits
-  let tr = [0.0, 0.0, 0.0];  // translation 
+  let ol = getMinimumContainerBox(shape.geom); // shape's limits
+  let tr = [0.0, 0.0, 0.0];  // translation
   let rt = [3.7, 2.3, 3.3];  // rotation
   let sc = [0.7, 0.7, 0.7]
   let ff = Math.PI/3;
@@ -64,13 +61,13 @@ var render = async function render(shape) {
   set2dShape(gl, shape.geom);
   gl.vertexAttribPointer(attrLocPosition, TUPLE_SZ, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrLocPosition);
-  
+
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   let attrColorPosition = gl.getAttribLocation(program, 'a_color');
   set2dShape(gl, shape.color);
   gl.vertexAttribPointer(attrColorPosition, TUPLE_SZ, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrColorPosition);
-  
+
   function draw() {
     // console.clear();
     gl.enable(gl.CULL_FACE);
@@ -82,7 +79,7 @@ var render = async function render(shape) {
     mat.scale(sc[0], sc[1], sc[2]);
     mat.translate(tr[0], tr[1], tr[2]);
     mat.orthographic(ol[0], ol[1], ol[2], ol[3], ol[4], ol[5]);
-    mat.perspectiveSimple(1);
+    mat.perspectiveSimple(ff);
     // printAs3dCoordinates(mat.transform(shape.geom, TUPLE_SZ), 3);
     gl.uniformMatrix4fv(unifLocMatrix, false, mat.val);
     gl.uniform1f(unifLocFFactor, ff);
@@ -127,8 +124,9 @@ var render = async function render(shape) {
 
   function setupSliderFf(max) {
     let label = document.createElement('label');
+    label.innerHTML = ff;
     let pres = 10;
-    let div = configureSlider('ctrlPersp', pres*max, ff, function(e) {
+    let div = configureSlider('ctrlPersp', max*pres, ff*pres, function(e) {
       ff = parseInt(e.target.value)/pres;
       label.innerHTML = ff;
       draw();

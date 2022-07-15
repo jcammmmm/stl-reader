@@ -176,13 +176,13 @@ function M4() {
 
   this.orthographic = function(r, l, t, b, n, f) {
     this.val = this.mult([
-      2/(r - l), 0,         0,         0,
-      0,         2/(t - b), 0,         0,
-      0,         0,         2/(n - f), 0,
+      2/(r - l), 0,          0,         0,
+      0,         2/(t - b),  0,         0,
+      0,         0,         -2/(n - f), 0,
       
       -(r + l)/(r - l),
       -(t + b)/(t - b),
-      -(n + f)/(n - f),
+       (n + f)/(n - f),
        1
     ]);
   }
@@ -418,16 +418,22 @@ function getMinimumContainerBox(arr) {
   for(let i = 3; i < arr.length; i++) {
     switch(i%3) {
       case 0:
-        box[0] = Math.max(box[0], arr[i]);
-        box[1] = Math.min(box[1], arr[i]);
+        if (arr[i] > box[0])
+          box[0] = arr[i];
+        else if(arr[i] < box[1])
+          box[1] = arr[i];
         break;
       case 1:
-        box[2] = Math.max(box[2], arr[i]);
-        box[3] = Math.min(box[3], arr[i]);
+        if (arr[i] > box[2])
+          box[2] = arr[i];
+        else if(arr[i] < box[3])
+          box[3] = arr[i];
         break;
       default: // 2
-        box[4] = Math.max(box[4], arr[i]);
-        box[5] = Math.min(box[5], arr[i]);
+        if (arr[i] > box[4])
+          box[4] = arr[i];
+        else if (arr[i] < box[5])
+          box[5] = arr[i];
         break;
     }
   }

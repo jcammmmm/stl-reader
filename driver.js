@@ -1,5 +1,5 @@
 (function(shapename) {
-  shapename = 'cube';
+  shapename = 'horma';
   fetch("http://127.0.0.1:5500/stl/" + shapename + ".stl")
   // fetch('https://mdn.github.io/dom-examples/streams/png-transform-stream/png-logo.png')
   .then(response => ({
