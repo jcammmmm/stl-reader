@@ -25,7 +25,6 @@ var DEPTH_SZ = 400; // the size of depth axis
 var render = async function render(shape) {
   let canvas = document.getElementById('c');
   canvas.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
-  canvas.addEventListener('keydown', keyboardController);
   canvas.focus();
 
   let gl = canvas.getContext('webgl');
@@ -53,9 +52,6 @@ var render = async function render(shape) {
   setupSliderSc(3);
   setupSliderFf(Math.PI);
 
-
-
-
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   let attrLocPosition = gl.getAttribLocation(program, 'a_position');
   set2dShape(gl, shape.geom);
@@ -68,9 +64,7 @@ var render = async function render(shape) {
   gl.vertexAttribPointer(attrColorPosition, TUPLE_SZ, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(attrColorPosition);
 
-  function draw() {
-    // Math.max(...getMinimumContainerBox(shape.geom))
-    // console.clear();
+  function draw(tr, rt, sc) {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
@@ -105,7 +99,7 @@ var render = async function render(shape) {
     let div = configureSlider('ctrlRot' + axis, Math.PI*minTurns*pres, Math.PI*maxTurns*pres, rt[axis]*pres, function(e) {
       rt[axis] = parseInt(e.target.value)/pres;
       label.innerHTML = rt[axis];
-      draw();
+      draw(tr, rt, sc);
     })
     div.appendChild(label);
   }
@@ -118,7 +112,7 @@ var render = async function render(shape) {
       let factor = parseInt(e.target.value)/pres;
       sc = [factor, factor, factor]
       label.innerHTML = factor;
-      draw();
+      draw(tr, rt, sc);
     })
     div.appendChild(label);
   }
@@ -130,12 +124,15 @@ var render = async function render(shape) {
     let div = configureSlider('ctrlPersp', 0, max*pres, ff*pres, function(e) {
       ff = parseInt(e.target.value)/pres;
       label.innerHTML = ff;
-      draw();
+      draw(tr, rt, sc);
     })
     div.appendChild(label);
   }
 
-  draw();
+  configureKeyboardController(canvas);
+  configureMouseController(canvas, tr, rt, sc, gl.canvas.clientWidth, gl.canvas.clientHeight, draw);
+
+  draw(tr, rt, sc);
   console.log('%cOK!', 'color: lime');
 }
 

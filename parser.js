@@ -99,6 +99,7 @@ class FacetTransformStream {
     this.facetCount = facetCount;
     this.precision = Math.round(facetCount/100);
     this.currCount = 0;
+    console.log('%c' + facetCount + ' triangles.', 'color: cyan');
   }
 
   transform(chunk, controller) {
@@ -131,7 +132,7 @@ class TriangleDataSink {
 
     this.shapeData = new Array(facetCount*9);
     this.colorData = new Array(facetCount*9);
-    console.log('%c'+ 2*this.shapeData.length/1_000_000 + ' megabytes allocated', 'color: cyan');
+    console.log('%c'+ 2*this.shapeData.length/1_000_000 + ' megabytes allocated.', 'color: cyan');
   }
 
   write(triangleData) {
