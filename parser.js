@@ -130,9 +130,8 @@ class TriangleDataSink {
     this.currCount = 0;
 
     this.shapeData = new Array(facetCount*9);
-    console.log('%c'+ this.shapeData.length + ' bytes alloc.', 'color: cyan');
     this.colorData = new Array(facetCount*9);
-    console.log('%c'+ this.shapeData.length + ' bytes alloc.', 'color: cyan');
+    console.log('%c'+ 2*this.shapeData.length/1_000_000 + ' megabytes allocated', 'color: cyan');
   }
 
   write(triangleData) {

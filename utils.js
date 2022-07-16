@@ -1,9 +1,9 @@
-function configureSlider(domid, max, curr, callback) {
+function configureSlider(domid, min, max, curr, callback) {
   let div = document.createElement('div');
   let slider = document.createElement('input');
   slider.setAttribute('id', domid);
   slider.setAttribute('type', 'range');
-  slider.setAttribute('min', 0);
+  slider.setAttribute('min', min);
   slider.setAttribute('max', max);
   slider.setAttribute('value', curr); // setting this attr goes after min and max
   slider.oninput = callback;
@@ -438,6 +438,14 @@ function getMinimumContainerBox(arr) {
     }
   }
   return box;
+}
+
+function getMaxAbsNorm(arr) {
+  let maxabs = arr[0];
+  for(a of arr)
+    if ((a >= 0 && a > maxabs) || (a < 0 && a*-1 > maxabs ))
+      a < 0 ? maxabs = a*-1 : maxabs = a;
+  return maxabs;
 }
 
 console.log('utils.js loaded.')
