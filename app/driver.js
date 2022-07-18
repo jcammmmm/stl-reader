@@ -1,6 +1,5 @@
-(function(shapename) {
-  shapename = 'teapot';
-  fetch("http://127.0.0.1:5500/stl/" + shapename + ".stl")
+function driver(shapename) {
+  fetch("./stl/" + shapename + ".stl")
   // fetch('https://mdn.github.io/dom-examples/streams/png-transform-stream/png-logo.png')
   .then(response => ({
     stream: response.body,
@@ -15,6 +14,9 @@
     fcount: facets.fcount
   }))
   .then(triangles => triangles.stream.pipeTo(new WritableStream(new TriangleDataSink(triangles.fcount))));  
-})();
+}
+
+configureKeyboardController(CANVAS);
+addDemoSelector(driver);
 
 console.log('driver.js loaded.');

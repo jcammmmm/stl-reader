@@ -21,13 +21,12 @@ var fragShader = `
 `
 var TUPLE_SZ = 3; // the number of entries per vertex
 var DEPTH_SZ = 400; // the size of depth axis
+var CANVAS = document.getElementById('c');
+var PROD_ENV = true;
 
 var render = async function render(shape) {
-  let canvas = document.getElementById('c');
-  canvas.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
-  canvas.focus();
-
-  let gl = canvas.getContext('webgl');
+  CANVAS.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
+  let gl = CANVAS.getContext('webgl');
   let program = createProgram(gl, vertShader, fragShader);
 
   let unifLocMatrix = gl.getUniformLocation(program, 'u_mat');
@@ -43,14 +42,16 @@ var render = async function render(shape) {
   
   let ol = getMaxAbsNorm(shape.geom) // shape's limits
 
-  setupSliderTr(0, -ol, ol);
-  setupSliderTr(1, -ol, ol);
-  setupSliderTr(2, -ol, ol);
-  setupSliderRt(0, -1, 1);
-  setupSliderRt(1, -1, 1);
-  setupSliderRt(2, -1, 1);
-  setupSliderSc(3);
-  setupSliderFf(Math.PI);
+  if (!PROD_ENV) {
+    setupSliderTr(0, -ol, ol);
+    setupSliderTr(1, -ol, ol);
+    setupSliderTr(2, -ol, ol);
+    setupSliderRt(0, -1, 1);
+    setupSliderRt(1, -1, 1);
+    setupSliderRt(2, -1, 1);
+    setupSliderSc(3);
+    setupSliderFf(Math.PI);
+  }
 
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   let attrLocPosition = gl.getAttribLocation(program, 'a_position');
@@ -129,9 +130,7 @@ var render = async function render(shape) {
     div.appendChild(label);
   }
 
-  configureKeyboardController(canvas);
-  configureMouseController(canvas, tr, rt, sc, gl.canvas.clientWidth, gl.canvas.clientHeight, draw);
-
+  configureMouseController(CANVAS, tr, rt, sc, gl.canvas.clientWidth, gl.canvas.clientHeight, draw);
   draw(tr, rt, sc);
   console.log('%cOK!', 'color: lime');
 }
