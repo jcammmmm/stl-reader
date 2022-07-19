@@ -120,13 +120,13 @@ function keyboardController(event) {
   }
 }
 
-function addDemoSelector(driverFunction) {
+function addDemoSelector(driverFunction, examplesAva) {
   let select = document.createElement('select');
-  for(let i = 0; i < EXAMPLES_AVA.length; i++) {
+  for(let i = 0; i < examplesAva.length; i++) {
     let option = document.createElement('option');
-    option.setAttribute('value', EXAMPLES_AVA[i]);
-    option.textContent = EXAMPLES_AVA[i];
-    option.addEventListener('mousedown', e => driverFunction(EXAMPLES_AVA[i]));
+    option.setAttribute('value', examplesAva[i]);
+    option.textContent = examplesAva[i];
+    option.addEventListener('mousedown', e => driverFunction(examplesAva[i]));
     select.appendChild(option);
   }
   document.getElementById('c').appendChild(select);

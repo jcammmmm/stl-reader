@@ -23,7 +23,6 @@ var TUPLE_SZ = 3; // the number of entries per vertex
 var DEPTH_SZ = 400; // the size of depth axis
 var CANVAS = document.getElementById('c');
 var PROD_ENV = true;
-var EXAMPLES_AVA = ['barz', 'ovni', 'sphe', 'teap', 'cube'];
 
 var render = async function render(shape) {
   CANVAS.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
@@ -36,10 +35,10 @@ var render = async function render(shape) {
   // shape = buildOrto3dF(0, 0, 30, 6);
   // printAs3dCoordinates(shape.geom, 13);
 
-  let tr = [0.0, 0.0, 0.0];  // translation
-  let rt = [0.0, 0.0, 0.0];  // rotation
-  let sc = [ 1.0,  1.0,  1.00];  // scaling
-  let ff = 1.0;
+  let tr = shape.tr;  // translation
+  let rt = shape.rt;  // rotation
+  let sc = shape.sc;  // scaling
+  let ff = shape.ff;  // fov of fudge factor
   
   let ol = getMaxAbsNorm(shape.geom) // shape's limits
 

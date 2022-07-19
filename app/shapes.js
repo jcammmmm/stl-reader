@@ -158,4 +158,73 @@ function buildOrto3dF(a, b, s, f) {
   }
 }
 
+class Shape {
+  constructor(
+    name='unknown', 
+    size=0, 
+    geom=[],
+    color=[],
+    tr=[0.0, 0.0, 0.0], 
+    rt=[0.0, 0.0, 0.0], 
+    sc=[1.0, 0.0, 0.0], 
+    ff=1.0) {
+    
+      if (tr.length != 3 && rt.length != 3 && sc.length != 3 && typeof ff != 'number')
+        throw Error('The types for the parameters for the default view are not correct.');
+      this.name = name;
+      this.size = size;
+      this.geom = geom;
+      this.color = color;
+      this.tr = tr;
+      this.rt = rt;
+      this.sc = sc;
+      this.ff = ff;
+
+      this.computeView();
+  }
+
+  computeView() {
+    switch (this.name) {
+      case 'barz':
+        this.tr = [0.0, 0.0, 0.0];
+        this.rt = [0.7, 0.2, 0.5];
+        this.sc = [1.1, 1.1, 1.1];
+        this.ff = 1.5;
+        break;
+      case 'ovni':
+        this.tr = [0.0, 0.0, 0.0];
+        this.rt = [0.6, 0.0, 0.0];
+        this.sc = [1.1, 1.1, 1.1];
+        this.ff = 1.3;
+        break;
+      case 'sphe':
+        this.tr = [0.0, 0.0, 0.0];
+        this.rt = [0.8, 2.1, 2.7];
+        this.sc = [0.6, 0.6, 0.6];
+        this.ff = 1.6;
+        break;
+      case 'teap':
+        this.tr = [0.0, 0.0, 0.0];
+        this.rt = [0.8, 0.3, 0.0];
+        this.sc = [0.5, 0.5, 0.5];
+        this.ff = 0.7;
+        break;
+      case 'cube':
+          this.tr = [0.0, 0.0, 0.0];
+          this.rt = [0.8, 0.8, 0.8];
+          this.sc = [0.3, 0.3, 0.3];
+          this.ff = 1.3;
+          break;
+      case 'horma':
+        this.tr = [0.0, 0.0, 0.0];
+        this.rt = [0.0, 0.0, 0.0];
+        this.sc = [1.0, 1.0, 1.0];
+        this.ff = 1.0;
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 console.log('shapes.js loaded.');

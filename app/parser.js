@@ -126,8 +126,9 @@ class FacetTransformStream {
 }
 
 class TriangleDataSink {
-  constructor(facetCount) {
+  constructor(facetCount, shapename) {
     this.facetCount = facetCount;
+    this.shapename = shapename;
     this.currCount = 0;
 
     this.shapeData = new Array(facetCount*9);
@@ -145,10 +146,13 @@ class TriangleDataSink {
   }
 
   close() {
-    render({
-      geom: this.shapeData,
-      color: this.colorData
-    });
+    render(
+      new Shape(
+        this.shapename,
+        this.facetCount,
+        this.shapeData,
+        this.colorData
+      ));
   }
 }
 
