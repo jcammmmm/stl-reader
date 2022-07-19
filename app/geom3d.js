@@ -23,6 +23,7 @@ var TUPLE_SZ = 3; // the number of entries per vertex
 var DEPTH_SZ = 400; // the size of depth axis
 var CANVAS = document.getElementById('c');
 var PROD_ENV = true;
+var EXAMPLES_AVA = ['barz', 'ovni', 'sphe', 'teap', 'cube'];
 
 var render = async function render(shape) {
   CANVAS.setAttribute('tabIndex', -1); // https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event

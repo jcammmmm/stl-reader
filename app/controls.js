@@ -121,16 +121,14 @@ function keyboardController(event) {
 }
 
 function addDemoSelector(driverFunction) {
-  let options = ['barz', 'ovni', 'sphe', 'teap', 'cube'];
   let select = document.createElement('select');
-  for(let i = 0; i < options.length; i++) {
+  for(let i = 0; i < EXAMPLES_AVA.length; i++) {
     let option = document.createElement('option');
-    option.setAttribute('value', options[i]);
-    option.textContent = options[i];
-    option.addEventListener('mousedown', e => driverFunction(options[i]));
+    option.setAttribute('value', EXAMPLES_AVA[i]);
+    option.textContent = EXAMPLES_AVA[i];
+    option.addEventListener('mousedown', e => driverFunction(EXAMPLES_AVA[i]));
     select.appendChild(option);
   }
   document.getElementById('c').appendChild(select);
   document.body.appendChild(select);
-  driverFunction('barz');
 }

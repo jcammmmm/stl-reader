@@ -16,7 +16,21 @@ function driver(shapename) {
   .then(triangles => triangles.stream.pipeTo(new WritableStream(new TriangleDataSink(triangles.fcount))));  
 }
 
+function controller(url) {
+  let urlsplit = url.split('?');
+  let shapename = 'barz';
+  if (urlsplit.length == 2) {
+    let kvsplit = urlsplit[1].split('=');
+    if (kvsplit.length == 2)
+      for(let i = 0; i < EXAMPLES_AVA.length; i++)
+        if (kvsplit[1] == EXAMPLES_AVA[i])
+          shapename = kvsplit[1];
+  }
+  driver(shapename);
+}
+
 configureKeyboardController(CANVAS);
 addDemoSelector(driver);
+controller(window.location.href);
 
 console.log('driver.js loaded.');
